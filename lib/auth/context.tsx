@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         access_token: string;
         refresh_token: string;
         user: User;
-      }>("/auth", { provider, id_token: idToken });
+      }>("/auth", { provider, id_token: idToken, role: "coach" });
 
       setAccessToken(res.access_token);
       setRefreshToken(res.refresh_token);
