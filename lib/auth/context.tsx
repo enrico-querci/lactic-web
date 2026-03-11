@@ -21,6 +21,7 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (email: string) => Promise<void>;
+  loginWithProvider: (provider: string, idToken: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -42,7 +43,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Try refresh + fetch user
     const restore = async () => {
       try {
         const res = await fetch(
@@ -77,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restore();
   }, []);
 
+  // Dev login (dev/test only)
   const login = useCallback(async (email: string) => {
     const res = await post<{
       access_token: string;
@@ -89,6 +90,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.user);
   }, []);
 
+  // Real auth (Google/Apple)
+  const loginWithProvider = useCallback(
+    async (provider: string, idToken: string) => {
+      const res = await post<{
+        access_token: string;
+        refresh_token: string;
+        user: User;
+      }>("/auth", { provider, id_token: idToken });
+
+      setAccessToken(res.access_token);
+      setRefreshToken(res.refresh_token);
+      setUser(res.user);
+    },
+    []
+  );
+
   const logout = useCallback(async () => {
     const refreshToken =
       typeof window !== "undefined"
@@ -97,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       if (refreshToken && getAccessToken()) {
-        await post("/auth", undefined); // logout is DELETE, handle below
+        await post("/auth", undefined);
       }
     } catch {
       // Ignore logout failures
@@ -109,7 +126,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, loginWithProvider, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
