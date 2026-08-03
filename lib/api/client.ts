@@ -114,7 +114,10 @@ async function request<T>(path: string, options: RequestOptions): Promise<T> {
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: "Request failed" }));
-    throw new Error(error.error || `HTTP ${res.status}`);
+    const validationErrors = Array.isArray(error.errors)
+      ? error.errors.join(", ")
+      : null;
+    throw new Error(error.error || validationErrors || `HTTP ${res.status}`);
   }
 
   return res.json();
@@ -132,6 +135,6 @@ export function patch<T>(path: string, body?: unknown): Promise<T> {
   return request<T>(path, { method: "PATCH", body });
 }
 
-export function del<T>(path: string): Promise<T> {
-  return request<T>(path, { method: "DELETE" });
+export function del<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>(path, { method: "DELETE", body });
 }

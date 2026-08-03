@@ -19,6 +19,16 @@ export interface RefreshResponse {
   refresh_token: string;
 }
 
+export interface ClientInvitation {
+  id: number;
+  email: string;
+  status: "pending" | "expired" | "accepted" | "revoked";
+  expires_at: string;
+  sent_at: string | null;
+  created_at: string;
+  coach_name: string;
+}
+
 export interface Exercise {
   id: number;
   name: string;
