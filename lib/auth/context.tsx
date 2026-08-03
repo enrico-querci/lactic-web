@@ -15,13 +15,18 @@ import {
   getAccessToken,
   post,
   get,
+  del,
 } from "@/lib/api/client";
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (email: string) => Promise<void>;
-  loginWithProvider: (provider: string, idToken: string) => Promise<void>;
+  loginWithProvider: (
+    provider: string,
+    idToken: string,
+    options?: { invitationToken?: string }
+  ) => Promise<User>;
   logout: () => Promise<void>;
 }
 
@@ -38,12 +43,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ? localStorage.getItem("lactic_refresh_token")
         : null;
 
-    if (!refreshToken) {
-      setLoading(false);
-      return;
-    }
-
     const restore = async () => {
+      if (!refreshToken) return;
+
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/refresh`,
@@ -69,12 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         setAccessToken(null);
         setRefreshToken(null);
-      } finally {
-        setLoading(false);
       }
     };
 
-    restore();
+    restore().finally(() => setLoading(false));
   }, []);
 
   // Dev login (dev/test only)
@@ -92,16 +92,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Real auth (Google/Apple)
   const loginWithProvider = useCallback(
-    async (provider: string, idToken: string) => {
+    async (
+      provider: string,
+      idToken: string,
+      options?: { invitationToken?: string }
+    ) => {
       const res = await post<{
         access_token: string;
         refresh_token: string;
         user: User;
-      }>("/auth", { provider, id_token: idToken, role: "coach" });
+      }>("/auth", {
+        provider,
+        id_token: idToken,
+        invitation_token: options?.invitationToken,
+      });
 
       setAccessToken(res.access_token);
       setRefreshToken(res.refresh_token);
       setUser(res.user);
+      return res.user;
     },
     []
   );
@@ -114,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       if (refreshToken && getAccessToken()) {
-        await post("/auth", undefined);
+        await del("/auth", { refresh_token: refreshToken });
       }
     } catch {
       // Ignore logout failures

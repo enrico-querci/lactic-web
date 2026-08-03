@@ -2,6 +2,13 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+Set the backend and Google client configuration in `.env.local`:
+
+```text
+NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=...
+```
+
 First, run the development server:
 
 ```bash
