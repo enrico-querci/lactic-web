@@ -29,13 +29,65 @@ export interface ClientInvitation {
   coach_name: string;
 }
 
+export interface MuscleRef {
+  key: string;
+  name: string;
+  region: string | null;
+}
+
+export interface EquipmentRef {
+  key: string;
+  name: string;
+}
+
 export interface Exercise {
   id: number;
+  /** Localized: the API resolves the language and falls back to English. */
   name: string;
-  muscle_group: string;
   is_custom: boolean;
+  category: string | null;
+  difficulty: string | null;
+  mechanic: string | null;
+  force: string | null;
+  prescription_type: string;
+  active: boolean;
+  assignable: boolean;
+  primary_muscle: MuscleRef | null;
+  equipment: EquipmentRef[];
+  has_animation: boolean;
+  /** A Lactic path, never the provider's URL. Requires authentication. */
+  animation_url: string | null;
+  /** Pre-catalog fields, still served until the catalog contract fully lands. */
+  muscle_group: string;
   video_url: string | null;
   thumbnail_url: string | null;
+}
+
+export interface ExerciseDetail extends Exercise {
+  description: string | null;
+  instructions: string[];
+  /** The locale actually served, which differs from the one asked for on fallback. */
+  locale: string | null;
+  secondary_muscles: EquipmentRef[];
+}
+
+export interface ExerciseTaxonomy {
+  muscles: MuscleRef[];
+  equipment: EquipmentRef[];
+  categories: string[];
+  difficulties: string[];
+}
+
+export interface PageMeta {
+  totalCount: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+}
+
+export interface Paged<T> {
+  items: T[];
+  meta: PageMeta;
 }
 
 export interface Program {

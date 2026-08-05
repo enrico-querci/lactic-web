@@ -1,3 +1,5 @@
+import type { PageMeta } from "@/lib/api/types";
+
 const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1`;
 
 let accessToken: string | null = null;
@@ -60,6 +62,22 @@ interface RequestOptions {
 }
 
 async function request<T>(path: string, options: RequestOptions): Promise<T> {
+  const res = await rawRequest(path, options);
+
+  if (res.status === 204) {
+    return undefined as T;
+  }
+
+  return res.json();
+}
+
+/**
+ * Performs the request and returns the raw Response, so callers that need
+ * headers (pagination) or bytes (animations) can get at them. Handles the
+ * 401-refresh-retry dance and throws on any other error status, so every
+ * caller sees the same failure behaviour.
+ */
+async function rawRequest(path: string, options: RequestOptions): Promise<Response> {
   let url = `${BASE_URL}${path}`;
 
   if (options.params) {
@@ -108,10 +126,6 @@ async function request<T>(path: string, options: RequestOptions): Promise<T> {
     }
   }
 
-  if (res.status === 204) {
-    return undefined as T;
-  }
-
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: "Request failed" }));
     const validationErrors = Array.isArray(error.errors)
@@ -120,11 +134,57 @@ async function request<T>(path: string, options: RequestOptions): Promise<T> {
     throw new Error(error.error || validationErrors || `HTTP ${res.status}`);
   }
 
-  return res.json();
+  return res;
 }
 
 export function get<T>(path: string, params?: Record<string, string>): Promise<T> {
   return request<T>(path, { method: "GET", params });
+}
+
+/**
+ * GET that also reads the pagination headers.
+ *
+ * The API deliberately keeps the body a bare array and puts the paging
+ * metadata in X-Total-Count and friends, so existing callers were not broken
+ * when pagination landed.
+ */
+export async function getPaged<T>(
+  path: string,
+  params?: Record<string, string>
+): Promise<{ items: T[]; meta: PageMeta }> {
+  const res = await rawRequest(path, { method: "GET", params });
+  const items = (await res.json()) as T[];
+
+  const header = (name: string, fallback: number) => {
+    const value = Number(res.headers.get(name));
+    return Number.isFinite(value) && value > 0 ? value : fallback;
+  };
+
+  return {
+    items,
+    meta: {
+      totalCount: header("X-Total-Count", items.length),
+      page: header("X-Page", 1),
+      perPage: header("X-Per-Page", items.length || 1),
+      totalPages: header("X-Total-Pages", 1),
+    },
+  };
+}
+
+/**
+ * Fetches a binary resource and returns an object URL for it.
+ *
+ * An <img src> cannot carry the JWT, so the bytes are fetched as an
+ * authenticated blob. The caller owns the returned URL and MUST call
+ * URL.revokeObjectURL on it, or the blob leaks for the life of the document.
+ */
+export async function getObjectUrl(apiPath: string): Promise<string> {
+  // The API returns animation_url rooted at /api/v1, while rawRequest prefixes
+  // BASE_URL which already ends in /api/v1. Strip the duplicate prefix rather
+  // than making callers know about it.
+  const path = apiPath.replace(/^\/api\/v1/, "");
+  const res = await rawRequest(path, { method: "GET" });
+  return URL.createObjectURL(await res.blob());
 }
 
 export function post<T>(path: string, body?: unknown): Promise<T> {

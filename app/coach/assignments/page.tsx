@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import {
   getProgramAssignments,
   deleteProgramAssignment,
   updateProgramAssignment,
 } from "@/lib/api/endpoints/program-assignments";
-import type { ProgramAssignment } from "@/lib/api/types";
 import { formatDate } from "@/lib/utils/format";
+import { useAsync } from "@/lib/hooks/use-async";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -27,33 +27,30 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AssignmentsPage() {
-  const [assignments, setAssignments] = useState<ProgramAssignment[]>([]);
-  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
 
-  const load = () => {
-    setLoading(true);
-    const params: Record<string, string> = {};
-    if (statusFilter) params.status = statusFilter;
-    getProgramAssignments(params)
-      .then(setAssignments)
-      .finally(() => setLoading(false));
-  };
+  // Uses the shared hook so loading is derived rather than set synchronously
+  // inside an effect, which React's set-state-in-effect rule rejects.
+  const query = useAsync(
+    statusFilter,
+    useCallback(
+      () => getProgramAssignments(statusFilter ? { status: statusFilter } : {}),
+      [statusFilter]
+    )
+  );
 
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter]);
+  const assignments = query.data ?? [];
+  const loading = query.initial;
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this assignment?")) return;
     await deleteProgramAssignment(id);
-    setAssignments((prev) => prev.filter((a) => a.id !== id));
+    query.reload();
   };
 
   const handleStatusChange = async (id: number, status: string) => {
     await updateProgramAssignment(id, { status });
-    load();
+    query.reload();
   };
 
   return (

@@ -19,7 +19,6 @@ import type {
   ExerciseLogExtended,
   SetLog,
 } from "@/lib/api/types";
-import { getClientSession } from "@/lib/api/endpoints/client-sessions";
 import { SetLogInput } from "@/components/domain/set-log-input";
 import { RestTimer } from "@/components/domain/rest-timer";
 import { Button } from "@/components/ui/button";
