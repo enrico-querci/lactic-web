@@ -48,7 +48,7 @@ export default function ClientProgramDetailPage() {
                     .map((workout) => (
                       <Link
                         key={workout.id}
-                        href={`/client/workouts/${workout.id}`}
+                        href={`/client/workouts/${workout.id}?assignment_id=${program.assignment_id}`}
                         className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-300"
                       >
                         <div>

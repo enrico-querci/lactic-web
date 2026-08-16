@@ -80,11 +80,21 @@ export default function WorkoutExecutionPage() {
   const handleAddSet = async (workoutExerciseId: number) => {
     const log = await ensureExerciseLog(workoutExerciseId);
     const nextPosition = log.set_logs.length + 1;
+
+    // Pre-fill from the coach's target rather than 0: the server requires
+    // reps > 0 (a zero-rep set isn't a set), so 0 always failed with a 422
+    // and "+ Add Set" could never add one. The target is already on screen
+    // as "Target: {sets} x {reps}" immediately above this button, and the
+    // client edits it to what they actually did via SetLogInput once it
+    // appears.
+    const workoutExercise = workout?.workout_exercises.find(
+      (we) => we.id === workoutExerciseId
+    );
     const newSet = await createSetLog({
       exercise_log_id: log.id,
       position: nextPosition,
-      weight_kg: 0,
-      reps: 0,
+      weight_kg: workoutExercise?.weight ?? 0,
+      reps: workoutExercise?.reps ?? 1,
     });
 
     setExerciseLogs((prev) => {

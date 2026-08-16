@@ -99,6 +99,10 @@ export interface Program {
 
 export interface ProgramExtended extends Program {
   weeks: WeekExtended[];
+  /** The current client's assignment for this program. Required to start a
+   *  workout session: WorkoutSession belongs to a specific assignment, not
+   *  just a program, since a client could hold more than one against it. */
+  assignment_id: number;
 }
 
 export interface Week {
