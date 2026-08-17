@@ -6,6 +6,8 @@ import { getClientWorkout } from "@/lib/api/endpoints/client-workouts";
 import {
   createClientSession,
   updateClientSession,
+  getClientSessions,
+  getClientSession,
 } from "@/lib/api/endpoints/client-sessions";
 import {
   createExerciseLog,
@@ -38,24 +40,70 @@ export default function WorkoutExecutionPage() {
   >(new Map());
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load workout
+  // Load the workout and resume any session already in progress for it.
+  //
+  // The session used to live only in React state, so a refresh — or the tab
+  // being evicted, which phones do constantly — orphaned the session on the
+  // server and started a new one, stranding every set already logged. The API
+  // already returns everything needed to recover: the :extended session view
+  // carries its exercise_logs and their set_logs, keyed by workout_exercise_id.
   useEffect(() => {
-    getClientWorkout(workoutId)
-      .then(setWorkout)
-      .finally(() => setLoading(false));
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const loadedWorkout = await getClientWorkout(workoutId);
+        if (cancelled) return;
+        setWorkout(loadedWorkout);
+
+        const sessions = await getClientSessions();
+        if (cancelled) return;
+
+        const inProgress = sessions.find(
+          (s) => s.workout_id === workoutId && !s.completed_at
+        );
+        if (!inProgress) return;
+
+        const full = await getClientSession(inProgress.id);
+        if (cancelled) return;
+
+        setSession(full);
+        setExerciseLogs(
+          new Map(full.exercise_logs.map((log) => [log.workout_exercise_id, log]))
+        );
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : "Could not load this workout");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [workoutId]);
 
-  // Create or resume session
+  // Starts a new session. Resuming an existing one happens on mount above, so
+  // by the time this can be pressed there is no session in progress.
   const startSession = useCallback(async () => {
     if (!workout || session) return;
-    const newSession = await createClientSession({
-      workout_id: workoutId,
-      program_assignment_id: assignmentId,
-      started_at: new Date().toISOString(),
-    });
-    setSession(newSession);
-    return newSession;
+    try {
+      const newSession = await createClientSession({
+        workout_id: workoutId,
+        program_assignment_id: assignmentId,
+        started_at: new Date().toISOString(),
+      });
+      setSession(newSession);
+      setError(null);
+      return newSession;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not start the workout");
+    }
   }, [workout, session, workoutId, assignmentId]);
 
   const ensureExerciseLog = useCallback(
@@ -77,9 +125,13 @@ export default function WorkoutExecutionPage() {
     [session, exerciseLogs]
   );
 
+  // The mutations below report failure rather than swallowing it. These are
+  // writes a trainee believes succeeded: a silently failed set is one they
+  // will not re-enter, and it vanishes on the next refresh.
   const handleAddSet = async (workoutExerciseId: number) => {
-    const log = await ensureExerciseLog(workoutExerciseId);
-    const nextPosition = log.set_logs.length + 1;
+    try {
+      const log = await ensureExerciseLog(workoutExerciseId);
+      const nextPosition = log.set_logs.length + 1;
 
     // Pre-fill from the coach's target rather than 0: the server requires
     // reps > 0 (a zero-rep set isn't a set), so 0 always failed with a 422
@@ -87,25 +139,29 @@ export default function WorkoutExecutionPage() {
     // as "Target: {sets} x {reps}" immediately above this button, and the
     // client edits it to what they actually did via SetLogInput once it
     // appears.
-    const workoutExercise = workout?.workout_exercises.find(
-      (we) => we.id === workoutExerciseId
-    );
-    const newSet = await createSetLog({
-      exercise_log_id: log.id,
-      position: nextPosition,
-      weight_kg: workoutExercise?.weight ?? 0,
-      reps: workoutExercise?.reps ?? 1,
-    });
-
-    setExerciseLogs((prev) => {
-      const map = new Map(prev);
-      const current = map.get(workoutExerciseId)!;
-      map.set(workoutExerciseId, {
-        ...current,
-        set_logs: [...current.set_logs, newSet],
+      const workoutExercise = workout?.workout_exercises.find(
+        (we) => we.id === workoutExerciseId
+      );
+      const newSet = await createSetLog({
+        exercise_log_id: log.id,
+        position: nextPosition,
+        weight_kg: workoutExercise?.weight ?? 0,
+        reps: workoutExercise?.reps ?? 1,
       });
-      return map;
-    });
+
+      setExerciseLogs((prev) => {
+        const map = new Map(prev);
+        const current = map.get(workoutExerciseId)!;
+        map.set(workoutExerciseId, {
+          ...current,
+          set_logs: [...current.set_logs, newSet],
+        });
+        return map;
+      });
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not add that set");
+    }
   };
 
   const handleUpdateSetLog = async (
@@ -113,43 +169,60 @@ export default function WorkoutExecutionPage() {
     setLogId: number,
     data: { weight_kg?: number; reps?: number }
   ) => {
-    const updated = await updateSetLog(setLogId, data);
-    setExerciseLogs((prev) => {
-      const map = new Map(prev);
-      const current = map.get(workoutExerciseId)!;
-      map.set(workoutExerciseId, {
-        ...current,
-        set_logs: current.set_logs.map((s) =>
-          s.id === setLogId ? updated : s
-        ),
+    try {
+      const updated = await updateSetLog(setLogId, data);
+      setExerciseLogs((prev) => {
+        const map = new Map(prev);
+        const current = map.get(workoutExerciseId)!;
+        map.set(workoutExerciseId, {
+          ...current,
+          set_logs: current.set_logs.map((s) =>
+            s.id === setLogId ? updated : s
+          ),
+        });
+        return map;
       });
-      return map;
-    });
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not save that set");
+    }
   };
 
   const handleDeleteSetLog = async (
     workoutExerciseId: number,
     setLogId: number
   ) => {
-    await deleteSetLog(setLogId);
-    setExerciseLogs((prev) => {
-      const map = new Map(prev);
-      const current = map.get(workoutExerciseId)!;
-      map.set(workoutExerciseId, {
-        ...current,
-        set_logs: current.set_logs.filter((s) => s.id !== setLogId),
+    try {
+      await deleteSetLog(setLogId);
+      setExerciseLogs((prev) => {
+        const map = new Map(prev);
+        const current = map.get(workoutExerciseId)!;
+        map.set(workoutExerciseId, {
+          ...current,
+          set_logs: current.set_logs.filter((s) => s.id !== setLogId),
+        });
+        return map;
       });
-      return map;
-    });
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not remove that set");
+    }
   };
 
   const handleComplete = async () => {
     if (!session) return;
     setCompleting(true);
-    await updateClientSession(session.id, {
-      completed_at: new Date().toISOString(),
-    });
-    router.push("/client/history");
+    try {
+      await updateClientSession(session.id, {
+        completed_at: new Date().toISOString(),
+      });
+      router.push("/client/history");
+    } catch (e) {
+      // Reset `completing` on failure, or the button stays stuck reading
+      // "Completing..." with no way to try again.
+      setCompleting(false);
+      setError(e instanceof Error ? e.message : "Could not complete the workout");
+    }
   };
 
   if (loading) return <Loading />;
@@ -159,7 +232,7 @@ export default function WorkoutExecutionPage() {
     <div>
       <h1 className="mb-1 text-2xl font-bold text-zinc-900">{workout.name}</h1>
       {Object.keys(workout.volume_sets).length > 0 && (
-        <div className="mb-4 flex gap-2">
+        <div className="mb-4 flex flex-wrap gap-2">
           {Object.entries(workout.volume_sets).map(([muscle, sets]) => (
             <span
               key={muscle}
@@ -169,6 +242,30 @@ export default function WorkoutExecutionPage() {
             </span>
           ))}
         </div>
+      )}
+
+      {/* Sticky so a failure stays visible while the trainee scrolls between
+          exercises, rather than scrolling away unnoticed mid-workout. */}
+      {error && (
+        <div
+          role="alert"
+          className="sticky top-2 z-10 mb-4 flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="shrink-0 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium hover:bg-red-50"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {session && !session.completed_at && exerciseLogs.size > 0 && (
+        <p className="mb-4 rounded-md bg-zinc-100 px-3 py-2 text-xs text-zinc-600">
+          Resumed a workout you already had in progress.
+        </p>
       )}
 
       {!session ? (
