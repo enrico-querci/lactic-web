@@ -12,11 +12,27 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/*
+ * The app is light-only, and says so.
+ *
+ * There was a prefers-color-scheme: dark override here, left over from the
+ * Next.js starter. It flipped --foreground to near-white while every surface
+ * in the app stayed hardcoded light (bg-white, bg-zinc-50) — there is not a
+ * single dark: variant anywhere in app/ or components/. So on a device set to
+ * dark mode, any element without an explicit text colour inherited near-white
+ * on a white background and became unreadable: form values a coach had just
+ * typed, and the weight and reps inputs a client uses mid-workout.
+ *
+ * color-scheme: light also makes the browser render its own controls light —
+ * the native date picker, select dropdowns and scrollbars — which otherwise
+ * stay dark and unreadable against these surfaces regardless of the CSS above.
+ *
+ * Real dark mode would mean theming every surface, not just flipping two
+ * variables. Until that is a deliberate piece of work, declaring light is the
+ * honest description of what this app actually is.
+ */
+:root {
+  color-scheme: light;
 }
 
 body {
