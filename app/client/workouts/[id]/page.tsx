@@ -23,6 +23,7 @@ import type {
 } from "@/lib/api/types";
 import { SetLogInput } from "@/components/domain/set-log-input";
 import { RestTimer } from "@/components/domain/rest-timer";
+import { ExerciseAssist } from "@/components/domain/exercise-assist";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
 
@@ -294,7 +295,9 @@ export default function WorkoutExecutionPage() {
                     <RestTimer seconds={we.rest_seconds} />
                   </div>
 
-                  <div className="mb-2 flex gap-3 text-xs text-zinc-500">
+                  {/* flex-wrap so the coach's prescription stacks rather than
+                      overflowing the card on a phone. */}
+                  <div className="mb-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500">
                     <span>
                       Target: {we.sets} x {we.reps}
                     </span>
@@ -304,6 +307,8 @@ export default function WorkoutExecutionPage() {
                       <span className="italic text-zinc-400">{we.notes}</span>
                     )}
                   </div>
+
+                  <ExerciseAssist exercise={we.exercise} />
 
                   <div className="space-y-2">
                     {log?.set_logs.map((setLog: SetLog) => (
