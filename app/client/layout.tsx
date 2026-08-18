@@ -11,6 +11,10 @@ const NAV_ITEMS = [
   { href: "/client/history", label: "History" },
 ];
 
+// "/client" prefixes every other route, so startsWith would mark Home active
+// everywhere. It needs an exact match.
+const HOME_HREF = "/client";
+
 export default function ClientLayout({ children }: { children: ReactNode }) {
   return (
     <RoleGuard role="client">
@@ -35,8 +39,20 @@ function TopNav() {
     <header className="border-b border-zinc-200 bg-white">
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3 sm:gap-6">
-          <h1 className="shrink-0 text-lg font-bold text-zinc-900">Lactic</h1>
+          <Link href={HOME_HREF} className="shrink-0 text-lg font-bold text-zinc-900">
+            Lactic
+          </Link>
           <nav className="flex gap-3 sm:gap-4">
+            <Link
+              href={HOME_HREF}
+              className={`text-sm font-medium ${
+                pathname === HOME_HREF
+                  ? "text-zinc-900"
+                  : "text-zinc-500 hover:text-zinc-700"
+              }`}
+            >
+              Home
+            </Link>
             {NAV_ITEMS.map((item) => {
               const isActive = pathname.startsWith(item.href);
               return (
