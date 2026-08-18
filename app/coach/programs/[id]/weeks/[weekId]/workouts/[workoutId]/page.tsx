@@ -25,6 +25,8 @@ export default function WorkoutDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showPicker, setShowPicker] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [mutating, setMutating] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const reload = useCallback(() => {
     getWorkout(programId, weekId, workoutId)
@@ -36,23 +38,44 @@ export default function WorkoutDetailPage() {
     reload();
   }, [reload]);
 
-  const handleAddExercise = async (exercise: Exercise) => {
-    if (!workout) return;
-    const nextPosition = String.fromCharCode(
-      65 + workout.workout_exercises.length
-    ); // A, B, C...
-    await createWorkoutExercise(workoutId, {
-      exercise_id: exercise.id,
-      position: nextPosition,
-      sets: 3,
-      reps: 10,
-      rest_seconds: 90,
-    });
-    setShowPicker(false);
-    reload();
+  // Each handler applies the mutation's own response to `workout` directly
+  // instead of calling reload(): a second full GET after every add/update/
+  // remove was pure round-trip cost for data the response already carried,
+  // and neither request gave any visible sign it was happening.
+  const runMutation = async (fn: () => Promise<void>) => {
+    setMutating(true);
+    setActionError(null);
+    try {
+      await fn();
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "That action failed");
+    } finally {
+      setMutating(false);
+    }
   };
 
-  const handleUpdateExercise = async (
+  const handleAddExercise = (exercise: Exercise) =>
+    runMutation(async () => {
+      if (!workout) return;
+      const nextPosition = String.fromCharCode(
+        65 + workout.workout_exercises.length
+      ); // A, B, C...
+      const workoutExercise = await createWorkoutExercise(workoutId, {
+        exercise_id: exercise.id,
+        position: nextPosition,
+        sets: 3,
+        reps: 10,
+        rest_seconds: 90,
+      });
+      setWorkout((w) =>
+        w
+          ? { ...w, workout_exercises: [...w.workout_exercises, workoutExercise] }
+          : w
+      );
+      setShowPicker(false);
+    });
+
+  const handleUpdateExercise = (
     exerciseId: number,
     data: {
       position: string;
@@ -63,16 +86,37 @@ export default function WorkoutDetailPage() {
       weight: number | null;
       notes: string | null;
     }
-  ) => {
-    await updateWorkoutExercise(workoutId, exerciseId, data);
-    setEditingId(null);
-    reload();
-  };
+  ) =>
+    runMutation(async () => {
+      const updated = await updateWorkoutExercise(workoutId, exerciseId, data);
+      setWorkout((w) =>
+        w
+          ? {
+              ...w,
+              workout_exercises: w.workout_exercises.map((we) =>
+                we.id === exerciseId ? updated : we
+              ),
+            }
+          : w
+      );
+      setEditingId(null);
+    });
 
-  const handleDeleteExercise = async (exerciseId: number) => {
+  const handleDeleteExercise = (exerciseId: number) => {
     if (!confirm("Remove this exercise?")) return;
-    await deleteWorkoutExercise(workoutId, exerciseId);
-    reload();
+    return runMutation(async () => {
+      await deleteWorkoutExercise(workoutId, exerciseId);
+      setWorkout((w) =>
+        w
+          ? {
+              ...w,
+              workout_exercises: w.workout_exercises.filter(
+                (we) => we.id !== exerciseId
+              ),
+            }
+          : w
+      );
+    });
   };
 
   if (loading) return <Loading />;
@@ -102,7 +146,23 @@ export default function WorkoutDetailPage() {
         )}
       </div>
 
-      <div className="space-y-3">
+      {actionError && (
+        <div
+          role="alert"
+          className="mb-4 flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          <span>{actionError}</span>
+          <button
+            type="button"
+            onClick={() => setActionError(null)}
+            className="shrink-0 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium hover:bg-red-50"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      <div className={`space-y-3 transition-opacity ${mutating ? "opacity-60" : ""}`}>
         {workout.workout_exercises
           .sort((a, b) => a.position.localeCompare(b.position))
           .map((we) => (
@@ -127,13 +187,15 @@ export default function WorkoutDetailPage() {
                     onClick={() =>
                       setEditingId(editingId === we.id ? null : we.id)
                     }
-                    className="text-xs text-zinc-500 hover:text-zinc-700"
+                    disabled={mutating}
+                    className="text-xs text-zinc-500 hover:text-zinc-700 disabled:opacity-50"
                   >
                     {editingId === we.id ? "Close" : "Edit"}
                   </button>
                   <button
                     onClick={() => handleDeleteExercise(we.id)}
-                    className="text-xs text-red-400 hover:text-red-600"
+                    disabled={mutating}
+                    className="text-xs text-red-400 hover:text-red-600 disabled:opacity-50"
                   >
                     Remove
                   </button>

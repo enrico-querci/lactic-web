@@ -28,6 +28,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AssignmentsPage() {
   const [statusFilter, setStatusFilter] = useState("");
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Uses the shared hook so loading is derived rather than set synchronously
   // inside an effect, which React's set-state-in-effect rule rejects.
@@ -42,15 +44,38 @@ export default function AssignmentsPage() {
   const assignments = query.data ?? [];
   const loading = query.initial;
 
+  // Both handlers apply the mutation's own response to the list already in
+  // hand instead of calling query.reload(): a status change or delete used
+  // to fire the PATCH/DELETE and then a second GET to see its effect, and
+  // neither request showed any feedback, so a slow network read as a
+  // dropped click rather than a click that worked.
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this assignment?")) return;
-    await deleteProgramAssignment(id);
-    query.reload();
+    setBusyId(id);
+    setActionError(null);
+    try {
+      await deleteProgramAssignment(id);
+      query.mutate((current) => (current ?? []).filter((a) => a.id !== id));
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Could not delete this assignment");
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const handleStatusChange = async (id: number, status: string) => {
-    await updateProgramAssignment(id, { status });
-    query.reload();
+    setBusyId(id);
+    setActionError(null);
+    try {
+      const updated = await updateProgramAssignment(id, { status });
+      query.mutate((current) =>
+        (current ?? []).map((a) => (a.id === id ? updated : a))
+      );
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Could not update this assignment");
+    } finally {
+      setBusyId(null);
+    }
   };
 
   return (
@@ -75,6 +100,22 @@ export default function AssignmentsPage() {
           ))}
         </select>
       </div>
+
+      {actionError && (
+        <div
+          role="alert"
+          className="mb-4 flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          <span>{actionError}</span>
+          <button
+            type="button"
+            onClick={() => setActionError(null)}
+            className="shrink-0 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium hover:bg-red-50"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <Loading />
@@ -110,7 +151,8 @@ export default function AssignmentsPage() {
                       onChange={(e) =>
                         handleStatusChange(a.id, e.target.value)
                       }
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[a.status] || ""}`}
+                      disabled={busyId === a.id}
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium disabled:opacity-50 ${STATUS_COLORS[a.status] || ""}`}
                     >
                       <option value="active">Active</option>
                       <option value="paused">Paused</option>
@@ -121,9 +163,10 @@ export default function AssignmentsPage() {
                     <Button
                       variant="danger"
                       size="sm"
+                      disabled={busyId === a.id}
                       onClick={() => handleDelete(a.id)}
                     >
-                      Delete
+                      {busyId === a.id ? "Working…" : "Delete"}
                     </Button>
                   </td>
                 </tr>
