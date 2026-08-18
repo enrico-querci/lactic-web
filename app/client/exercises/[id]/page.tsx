@@ -1,27 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getExerciseHistory } from "@/lib/api/endpoints/client-exercises";
-import type { SetLog } from "@/lib/api/types";
+import { useAsync } from "@/lib/hooks/use-async";
 import { Loading } from "@/components/ui/loading";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 
 export default function ExerciseHistoryPage() {
   const params = useParams();
   const router = useRouter();
   const exerciseId = Number(params.id);
 
-  const [history, setHistory] = useState<SetLog[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, error, initial, reload } = useAsync(
+    `exercise-history:${exerciseId}`,
+    useCallback(() => getExerciseHistory(exerciseId), [exerciseId])
+  );
 
-  useEffect(() => {
-    getExerciseHistory(exerciseId)
-      .then(setHistory)
-      .finally(() => setLoading(false));
-  }, [exerciseId]);
+  if (initial) return <Loading />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
 
-  if (loading) return <Loading />;
+  const history = data ?? [];
 
   return (
     <div>
