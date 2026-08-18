@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback } from "react";
 import Link from "next/link";
 import { getClientPrograms } from "@/lib/api/endpoints/client-programs";
-import type { ProgramAssignment } from "@/lib/api/types";
 import { formatDate } from "@/lib/utils/format";
+import { useAsync } from "@/lib/hooks/use-async";
 import { Loading } from "@/components/ui/loading";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-100 text-green-700",
@@ -15,17 +16,15 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function ClientProgramsPage() {
-  const [assignments, setAssignments] = useState<ProgramAssignment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, error, initial, reload } = useAsync(
+    "client-programs",
+    useCallback(() => getClientPrograms(), [])
+  );
 
-  useEffect(() => {
-    getClientPrograms()
-      .then(setAssignments)
-      .finally(() => setLoading(false));
-  }, []);
+  if (initial) return <Loading />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
 
-  if (loading) return <Loading />;
-
+  const assignments = data ?? [];
   if (assignments.length === 0) {
     return <EmptyState message="No programs assigned yet. Ask your coach!" />;
   }
@@ -41,10 +40,12 @@ export default function ClientProgramsPage() {
             href={`/client/programs/${a.program.id}`}
             className="block rounded-lg border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-300"
           >
-            <div className="flex items-center justify-between">
+            {/* gap-2 and shrink-0 so a long program name wraps instead of
+                crushing the status badge on a narrow phone. */}
+            <div className="flex items-start justify-between gap-2">
               <h2 className="font-medium text-zinc-900">{a.program.name}</h2>
               <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[a.status] || ""}`}
+                className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[a.status] || ""}`}
               >
                 {a.status}
               </span>

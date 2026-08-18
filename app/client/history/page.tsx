@@ -1,25 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback } from "react";
 import Link from "next/link";
 import { getClientSessions } from "@/lib/api/endpoints/client-sessions";
-import type { WorkoutSession } from "@/lib/api/types";
 import { formatDateTime, formatDuration } from "@/lib/utils/format";
+import { useAsync } from "@/lib/hooks/use-async";
 import { Loading } from "@/components/ui/loading";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 
 export default function HistoryPage() {
-  const [sessions, setSessions] = useState<WorkoutSession[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, error, initial, reload } = useAsync(
+    "client-sessions",
+    useCallback(() => getClientSessions(), [])
+  );
 
-  useEffect(() => {
-    getClientSessions()
-      .then(setSessions)
-      .finally(() => setLoading(false));
-  }, []);
+  if (initial) return <Loading />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
 
-  if (loading) return <Loading />;
-
+  const sessions = data ?? [];
   if (sessions.length === 0) {
     return <EmptyState message="No workout history yet. Start your first workout!" />;
   }
@@ -35,17 +34,19 @@ export default function HistoryPage() {
           <Link
             key={session.id}
             href={`/client/history/${session.id}`}
-            className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-300"
+            className="flex items-start justify-between gap-3 rounded-lg border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-300"
           >
-            <div>
+            <div className="min-w-0">
               <p className="font-medium text-zinc-900">
                 {formatDateTime(session.started_at)}
               </p>
               {session.notes && (
-                <p className="mt-1 text-sm text-zinc-500">{session.notes}</p>
+                <p className="mt-1 truncate text-sm text-zinc-500">{session.notes}</p>
               )}
             </div>
-            <div className="text-sm text-zinc-500">
+            {/* shrink-0 keeps the duration on one line; a long note otherwise
+                squeezes "In progress" into a vertical stack of characters. */}
+            <div className="shrink-0 text-sm text-zinc-500">
               {session.completed_at
                 ? formatDuration(session.started_at, session.completed_at)
                 : "In progress"}

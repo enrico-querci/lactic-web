@@ -1,27 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getClientSession } from "@/lib/api/endpoints/client-sessions";
-import type { WorkoutSessionExtended } from "@/lib/api/types";
 import { formatDateTime, formatDuration } from "@/lib/utils/format";
+import { useAsync } from "@/lib/hooks/use-async";
 import { Loading } from "@/components/ui/loading";
+import { ErrorState } from "@/components/ui/error-state";
 
 export default function SessionDetailPage() {
   const params = useParams();
   const router = useRouter();
   const sessionId = Number(params.id);
 
-  const [session, setSession] = useState<WorkoutSessionExtended | null>(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: session,
+    error,
+    initial,
+    reload,
+  } = useAsync(
+    `client-session:${sessionId}`,
+    useCallback(() => getClientSession(sessionId), [sessionId])
+  );
 
-  useEffect(() => {
-    getClientSession(sessionId)
-      .then(setSession)
-      .finally(() => setLoading(false));
-  }, [sessionId]);
-
-  if (loading) return <Loading />;
+  if (initial) return <Loading />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
   if (!session) return <div>Session not found</div>;
 
   return (

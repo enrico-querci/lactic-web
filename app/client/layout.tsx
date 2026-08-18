@@ -33,10 +33,10 @@ function TopNav() {
 
   return (
     <header className="border-b border-zinc-200 bg-white">
-      <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-6">
-          <h1 className="text-lg font-bold text-zinc-900">Lactic</h1>
-          <nav className="flex gap-4">
+      <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-6">
+          <h1 className="shrink-0 text-lg font-bold text-zinc-900">Lactic</h1>
+          <nav className="flex gap-3 sm:gap-4">
             {NAV_ITEMS.map((item) => {
               const isActive = pathname.startsWith(item.href);
               return (
@@ -55,8 +55,12 @@ function TopNav() {
             })}
           </nav>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-zinc-500">{user?.name}</span>
+        {/* The name is the first thing to go on a narrow screen: the client
+            knows who they are, and "Log out" must stay reachable. */}
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="hidden text-sm text-zinc-500 sm:inline">
+            {user?.name}
+          </span>
           <button
             onClick={handleLogout}
             className="text-sm text-zinc-400 hover:text-zinc-600"

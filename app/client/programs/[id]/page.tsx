@@ -1,27 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getClientProgram } from "@/lib/api/endpoints/client-programs";
-import type { ProgramExtended } from "@/lib/api/types";
+import { useAsync } from "@/lib/hooks/use-async";
 import { Loading } from "@/components/ui/loading";
+import { ErrorState } from "@/components/ui/error-state";
 import { dayName } from "@/lib/utils/format";
 
 export default function ClientProgramDetailPage() {
   const params = useParams();
   const programId = Number(params.id);
 
-  const [program, setProgram] = useState<ProgramExtended | null>(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: program,
+    error,
+    initial,
+    reload,
+  } = useAsync(
+    `client-program:${programId}`,
+    useCallback(() => getClientProgram(programId), [programId])
+  );
 
-  useEffect(() => {
-    getClientProgram(programId)
-      .then(setProgram)
-      .finally(() => setLoading(false));
-  }, [programId]);
-
-  if (loading) return <Loading />;
+  if (initial) return <Loading />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
   if (!program) return <div>Program not found</div>;
 
   return (
