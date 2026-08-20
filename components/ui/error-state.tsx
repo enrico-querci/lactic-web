@@ -1,6 +1,7 @@
 interface ErrorStateProps {
   message: string;
   onRetry?: () => void;
+  retryLabel?: string;
 }
 
 /**
@@ -10,8 +11,13 @@ interface ErrorStateProps {
  * a visible failure state the page renders blank or crashes, which is
  * indistinguishable from "you have no programs" — so retry has to be offered
  * rather than leaving a refresh as the only recourse.
+ *
+ * retryLabel defaults to the English literal rather than reading useLocale()
+ * internally: this component is shared with app/coach, which has no locale
+ * switcher and must render identically regardless of the visitor's browser
+ * language. Client call sites pass retryLabel={t("common.retry")} explicitly.
  */
-export function ErrorState({ message, onRetry }: ErrorStateProps) {
+export function ErrorState({ message, onRetry, retryLabel = "Try again" }: ErrorStateProps) {
   return (
     <div
       role="alert"
@@ -24,7 +30,7 @@ export function ErrorState({ message, onRetry }: ErrorStateProps) {
           onClick={onRetry}
           className="rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
         >
-          Try again
+          {retryLabel}
         </button>
       )}
     </div>

@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useLocale } from "@/lib/i18n/context";
 
 interface RestTimerProps {
   seconds: number;
 }
 
 export function RestTimer({ seconds }: RestTimerProps) {
+  const { t } = useLocale();
   const [remaining, setRemaining] = useState(0);
   const [active, setActive] = useState(false);
 
@@ -50,7 +52,7 @@ export function RestTimer({ seconds }: RestTimerProps) {
             onClick={stop}
             className="rounded px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-100"
           >
-            Skip
+            {t("workout.skip")}
           </button>
         </>
       ) : (
@@ -58,7 +60,7 @@ export function RestTimer({ seconds }: RestTimerProps) {
           onClick={start}
           className="rounded-md bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-200"
         >
-          Rest {seconds}s
+          {t("workout.restSeconds", { seconds })}
         </button>
       )}
     </div>

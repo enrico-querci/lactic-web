@@ -5,11 +5,13 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getClientProgram } from "@/lib/api/endpoints/client-programs";
 import { useAsync } from "@/lib/hooks/use-async";
+import { useLocale } from "@/lib/i18n/context";
 import { Loading } from "@/components/ui/loading";
 import { ErrorState } from "@/components/ui/error-state";
 import { dayName } from "@/lib/utils/format";
 
 export default function ClientProgramDetailPage() {
+  const { t, locale } = useLocale();
   const params = useParams();
   const programId = Number(params.id);
 
@@ -24,8 +26,9 @@ export default function ClientProgramDetailPage() {
   );
 
   if (initial) return <Loading />;
-  if (error) return <ErrorState message={error} onRetry={reload} />;
-  if (!program) return <div>Program not found</div>;
+  if (error)
+    return <ErrorState message={error} onRetry={reload} retryLabel={t("common.retry")} />;
+  if (!program) return <div>{t("program.notFound")}</div>;
 
   return (
     <div>
@@ -40,10 +43,10 @@ export default function ClientProgramDetailPage() {
           .map((week) => (
             <div key={week.id}>
               <h2 className="mb-3 text-lg font-semibold text-zinc-800">
-                Week {week.position}
+                {t("program.week", { position: week.position })}
               </h2>
               {week.workouts.length === 0 ? (
-                <p className="text-sm text-zinc-400">No workouts this week</p>
+                <p className="text-sm text-zinc-400">{t("program.noWorkoutsThisWeek")}</p>
               ) : (
                 <div className="space-y-2">
                   {week.workouts
@@ -56,7 +59,7 @@ export default function ClientProgramDetailPage() {
                       >
                         <div>
                           <span className="mr-2 text-xs font-medium text-zinc-400">
-                            {dayName(workout.day)}
+                            {dayName(workout.day, locale)}
                           </span>
                           <span className="font-medium text-zinc-900">
                             {workout.name}

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { ErrorState } from "@/components/ui/error-state";
+import { useLocale } from "@/lib/i18n/context";
 
 /**
  * Catches a render-phase throw from any client page. Does not catch throws
@@ -19,14 +20,17 @@ export default function ClientError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useLocale();
+
   useEffect(() => {
     Sentry.captureException(error);
   }, [error]);
 
   return (
     <ErrorState
-      message="This page hit a problem. Try again, or use the menu above to go elsewhere."
+      message={t("error.clientBoundary")}
       onRetry={reset}
+      retryLabel={t("common.retry")}
     />
   );
 }

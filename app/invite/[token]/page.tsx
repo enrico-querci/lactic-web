@@ -12,18 +12,26 @@ import type { ClientInvitation } from "@/lib/api/types";
 import { useAuth } from "@/lib/auth/context";
 import { useGoogleIdentityScript } from "@/lib/auth/use-google-script";
 import { useLocale } from "@/lib/i18n/context";
+import type { MessageKey } from "@/lib/i18n/messages/en";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
+const STATUS_LABEL: Record<ClientInvitation["status"], MessageKey> = {
+  pending: "invite.status.accepted", // unreachable: "unavailable" is only shown when status !== "pending"
+  expired: "invite.status.expired",
+  accepted: "invite.status.accepted",
+  revoked: "invite.status.revoked",
+};
+
 export default function ClientInvitationPage() {
   const params = useParams<{ token: string }>();
   const token = params.token;
   const router = useRouter();
   const { user, loading: authLoading, loginWithProvider, logout } = useAuth();
-  const { locale } = useLocale();
+  const { t, locale } = useLocale();
   const [invitation, setInvitation] = useState<ClientInvitation | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -34,10 +42,10 @@ export default function ClientInvitationPage() {
     getClientInvitation(token)
       .then(setInvitation)
       .catch((err) =>
-        setError(err instanceof Error ? err.message : "Invalid invitation link")
+        setError(err instanceof Error ? err.message : t("invite.invalidLink"))
       )
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, t]);
 
   const finishOnboarding = useCallback(() => {
     router.replace("/client/programs");
@@ -55,7 +63,7 @@ export default function ClientInvitationPage() {
         });
         finishOnboarding();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Google sign-in failed");
+        setError(err instanceof Error ? err.message : t("invite.googleFailed"));
       } finally {
         setSubmitting(false);
       }
@@ -64,7 +72,7 @@ export default function ClientInvitationPage() {
     return () => {
       delete window.__lacticGoogleCallback;
     };
-  }, [finishOnboarding, loginWithProvider, token]);
+  }, [finishOnboarding, loginWithProvider, token, t]);
 
   const initializeGoogle = useCallback(() => {
     if (
@@ -102,7 +110,7 @@ export default function ClientInvitationPage() {
       await acceptClientInvitation(token);
       finishOnboarding();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not accept invitation");
+      setError(err instanceof Error ? err.message : t("invite.acceptFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -118,7 +126,7 @@ export default function ClientInvitationPage() {
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 p-4">
       <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-sm">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-zinc-900">Join Lactic</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">{t("invite.title")}</h1>
           <LanguageSwitcher />
         </div>
 
@@ -131,14 +139,14 @@ export default function ClientInvitationPage() {
         {invitation && (
           <>
             <p className="mt-4 text-sm text-zinc-600">
-              <strong>{invitation.coach_name}</strong> invited you to join as a
-              client using <strong>{invitation.email}</strong>.
+              <strong>{invitation.coach_name}</strong>
+              {t("invite.invitedByMiddle")}
+              <strong>{invitation.email}</strong>.
             </p>
 
             {unavailable ? (
               <p className="mt-6 rounded-md bg-amber-50 p-3 text-sm text-amber-700">
-                This invitation is {invitation.status}. Ask your coach to send a
-                new one.
+                {t("invite.unavailable", { status: t(STATUS_LABEL[invitation.status]) })}
               </p>
             ) : user ? (
               emailMatches && user.role === "client" ? (
@@ -147,13 +155,15 @@ export default function ClientInvitationPage() {
                   disabled={submitting}
                   onClick={handleAccept}
                 >
-                  {submitting ? "Joining…" : "Accept invitation"}
+                  {submitting ? t("invite.joining") : t("invite.accept")}
                 </Button>
               ) : (
                 <div className="mt-6 rounded-md bg-amber-50 p-3 text-sm text-amber-700">
                   <p>
-                    You are signed in as {user.email}. Continue with
-                    {` ${invitation.email}`} to accept this invitation.
+                    {t("invite.wrongAccount", {
+                      currentEmail: user.email,
+                      invitedEmail: invitation.email,
+                    })}
                   </p>
                   <Button
                     className="mt-3"
@@ -161,25 +171,25 @@ export default function ClientInvitationPage() {
                     variant="secondary"
                     onClick={logout}
                   >
-                    Sign out
+                    {t("nav.logOut")}
                   </Button>
                 </div>
               )
             ) : (
               <div className="mt-6">
                 <p className="mb-3 text-sm text-zinc-500">
-                  Continue with Google to verify your email and finish joining.
+                  {t("invite.continueWithGoogle")}
                 </p>
                 {submitting && (
                   <p className="mb-3 text-center text-sm text-zinc-500">
-                    Verifying your account…
+                    {t("invite.verifying")}
                   </p>
                 )}
                 {GOOGLE_CLIENT_ID ? (
                   <div ref={googleButtonRef} className="flex justify-center" />
                 ) : (
                   <p className="text-sm text-red-600">
-                    Google Sign-In is not configured.
+                    {t("invite.googleNotConfigured")}
                   </p>
                 )}
               </div>
