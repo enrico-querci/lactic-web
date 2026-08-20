@@ -5,10 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { getClientSession } from "@/lib/api/endpoints/client-sessions";
 import { formatDateTime, formatDuration } from "@/lib/utils/format";
 import { useAsync } from "@/lib/hooks/use-async";
+import { useLocale } from "@/lib/i18n/context";
 import { Loading } from "@/components/ui/loading";
 import { ErrorState } from "@/components/ui/error-state";
 
 export default function SessionDetailPage() {
+  const { t, locale } = useLocale();
   const params = useParams();
   const router = useRouter();
   const sessionId = Number(params.id);
@@ -24,8 +26,9 @@ export default function SessionDetailPage() {
   );
 
   if (initial) return <Loading />;
-  if (error) return <ErrorState message={error} onRetry={reload} />;
-  if (!session) return <div>Session not found</div>;
+  if (error)
+    return <ErrorState message={error} onRetry={reload} retryLabel={t("common.retry")} />;
+  if (!session) return <div>{t("session.notFound")}</div>;
 
   return (
     <div>
@@ -33,17 +36,19 @@ export default function SessionDetailPage() {
         onClick={() => router.push("/client/history")}
         className="mb-4 text-sm text-zinc-500 hover:text-zinc-700"
       >
-        &larr; Back to history
+        &larr; {t("history.backToHistory")}
       </button>
 
       <h1 className="mb-1 text-2xl font-bold text-zinc-900">
-        Session Details
+        {t("session.details")}
       </h1>
       <div className="mb-6 flex gap-4 text-sm text-zinc-500">
-        <span>{formatDateTime(session.started_at)}</span>
+        <span>{formatDateTime(session.started_at, locale)}</span>
         {session.completed_at && (
           <span>
-            Duration: {formatDuration(session.started_at, session.completed_at)}
+            {t("session.duration", {
+              duration: formatDuration(session.started_at, session.completed_at),
+            })}
           </span>
         )}
       </div>
@@ -52,7 +57,7 @@ export default function SessionDetailPage() {
       )}
 
       {session.exercise_logs.length === 0 ? (
-        <p className="text-sm text-zinc-400">No exercises logged</p>
+        <p className="text-sm text-zinc-400">{t("session.noExercisesLogged")}</p>
       ) : (
         <div className="space-y-4">
           {session.exercise_logs.map((log) => (
@@ -62,7 +67,7 @@ export default function SessionDetailPage() {
             >
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium text-zinc-900">
-                  Exercise #{log.workout_exercise_id}
+                  {t("session.exerciseNumber", { id: log.workout_exercise_id })}
                 </span>
                 {log.notes && (
                   <span className="text-xs italic text-zinc-400">
@@ -81,15 +86,17 @@ export default function SessionDetailPage() {
                         className="flex gap-4 text-sm text-zinc-600"
                       >
                         <span className="w-8 text-zinc-400">
-                          Set {setLog.position}
+                          {t("session.setLabel", { position: setLog.position })}
                         </span>
                         <span>{setLog.weight_kg} kg</span>
-                        <span>{setLog.reps} reps</span>
+                        <span>
+                          {setLog.reps} {t("common.reps")}
+                        </span>
                       </div>
                     ))}
                 </div>
               ) : (
-                <p className="text-xs text-zinc-400">No sets logged</p>
+                <p className="text-xs text-zinc-400">{t("session.noSetsLogged")}</p>
               )}
             </div>
           ))}

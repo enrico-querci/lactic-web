@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { SetLog } from "@/lib/api/types";
+import { useLocale } from "@/lib/i18n/context";
 
 interface SetLogInputProps {
   setLog: SetLog;
@@ -10,6 +11,7 @@ interface SetLogInputProps {
 }
 
 export function SetLogInput({ setLog, onUpdate, onDelete }: SetLogInputProps) {
+  const { t } = useLocale();
   const [weightKg, setWeightKg] = useState(String(setLog.weight_kg));
   const [reps, setReps] = useState(String(setLog.reps));
 
@@ -50,9 +52,9 @@ export function SetLogInput({ setLog, onUpdate, onDelete }: SetLogInputProps) {
         onBlur={handleBlurReps}
         min={0}
         className="w-16 rounded-md border border-zinc-300 px-2 py-1.5 text-center text-sm"
-        placeholder="reps"
+        placeholder={t("common.reps")}
       />
-      <span className="text-xs text-zinc-400">reps</span>
+      <span className="text-xs text-zinc-400">{t("common.reps")}</span>
       <button
         onClick={() => onDelete(setLog.id)}
         className="ml-1 text-xs text-red-400 hover:text-red-600"

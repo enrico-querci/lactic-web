@@ -26,8 +26,10 @@ import { RestTimer } from "@/components/domain/rest-timer";
 import { ExerciseAssist } from "@/components/domain/exercise-assist";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
+import { useLocale } from "@/lib/i18n/context";
 
 export default function WorkoutExecutionPage() {
+  const { t } = useLocale();
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -76,7 +78,7 @@ export default function WorkoutExecutionPage() {
         );
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Could not load this workout");
+          setError(e instanceof Error ? e.message : t("workout.loadFailed"));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -87,7 +89,7 @@ export default function WorkoutExecutionPage() {
     return () => {
       cancelled = true;
     };
-  }, [workoutId]);
+  }, [workoutId, t]);
 
   // Starts a new session. Resuming an existing one happens on mount above, so
   // by the time this can be pressed there is no session in progress.
@@ -103,16 +105,16 @@ export default function WorkoutExecutionPage() {
       setError(null);
       return newSession;
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not start the workout");
+      setError(e instanceof Error ? e.message : t("workout.startFailed"));
     }
-  }, [workout, session, workoutId, assignmentId]);
+  }, [workout, session, workoutId, assignmentId, t]);
 
   const ensureExerciseLog = useCallback(
     async (workoutExerciseId: number): Promise<ExerciseLogExtended> => {
       const existing = exerciseLogs.get(workoutExerciseId);
       if (existing) return existing;
 
-      if (!session) throw new Error("No active session");
+      if (!session) throw new Error(t("workout.noActiveSession"));
 
       const log = await createExerciseLog({
         workout_session_id: session.id,
@@ -123,7 +125,7 @@ export default function WorkoutExecutionPage() {
       setExerciseLogs((prev) => new Map(prev).set(workoutExerciseId, extended));
       return extended;
     },
-    [session, exerciseLogs]
+    [session, exerciseLogs, t]
   );
 
   // The mutations below report failure rather than swallowing it. These are
@@ -161,7 +163,7 @@ export default function WorkoutExecutionPage() {
       });
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not add that set");
+      setError(e instanceof Error ? e.message : t("workout.addSetFailed"));
     }
   };
 
@@ -185,7 +187,7 @@ export default function WorkoutExecutionPage() {
       });
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not save that set");
+      setError(e instanceof Error ? e.message : t("workout.saveSetFailed"));
     }
   };
 
@@ -206,7 +208,7 @@ export default function WorkoutExecutionPage() {
       });
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not remove that set");
+      setError(e instanceof Error ? e.message : t("workout.removeSetFailed"));
     }
   };
 
@@ -222,12 +224,12 @@ export default function WorkoutExecutionPage() {
       // Reset `completing` on failure, or the button stays stuck reading
       // "Completing..." with no way to try again.
       setCompleting(false);
-      setError(e instanceof Error ? e.message : "Could not complete the workout");
+      setError(e instanceof Error ? e.message : t("workout.completeFailed"));
     }
   };
 
   if (loading) return <Loading />;
-  if (!workout) return <div>Workout not found</div>;
+  if (!workout) return <div>{t("workout.notFound")}</div>;
 
   return (
     <div>
@@ -258,19 +260,19 @@ export default function WorkoutExecutionPage() {
             onClick={() => setError(null)}
             className="shrink-0 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium hover:bg-red-50"
           >
-            Dismiss
+            {t("common.dismiss")}
           </button>
         </div>
       )}
 
       {session && !session.completed_at && exerciseLogs.size > 0 && (
         <p className="mb-4 rounded-md bg-zinc-100 px-3 py-2 text-xs text-zinc-600">
-          Resumed a workout you already had in progress.
+          {t("workout.resumedInProgress")}
         </p>
       )}
 
       {!session ? (
-        <Button onClick={startSession}>Start Workout</Button>
+        <Button onClick={startSession}>{t("workout.start")}</Button>
       ) : (
         <div className="space-y-4">
           {workout.workout_exercises
@@ -298,11 +300,11 @@ export default function WorkoutExecutionPage() {
                   {/* flex-wrap so the coach's prescription stacks rather than
                       overflowing the card on a phone. */}
                   <div className="mb-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500">
-                    <span>
-                      Target: {we.sets} x {we.reps}
-                    </span>
+                    <span>{t("workout.target", { sets: we.sets, reps: we.reps })}</span>
                     {we.rir != null && <span>RIR {we.rir}</span>}
-                    {we.weight != null && <span>Suggested {we.weight}kg</span>}
+                    {we.weight != null && (
+                      <span>{t("workout.suggested", { weight: we.weight })}</span>
+                    )}
                     {we.notes && (
                       <span className="italic text-zinc-400">{we.notes}</span>
                     )}
@@ -327,7 +329,7 @@ export default function WorkoutExecutionPage() {
                     onClick={() => handleAddSet(we.id)}
                     className="mt-2 text-sm text-zinc-500 hover:text-zinc-700"
                   >
-                    + Add Set
+                    {t("workout.addSet")}
                   </button>
                 </div>
               );
@@ -339,7 +341,7 @@ export default function WorkoutExecutionPage() {
               disabled={completing}
               className="w-full"
             >
-              {completing ? "Completing..." : "Complete Workout"}
+              {completing ? t("workout.completing") : t("workout.complete")}
             </Button>
           </div>
         </div>

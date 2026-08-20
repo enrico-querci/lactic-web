@@ -9,6 +9,7 @@ import {
 import { getClientSessions } from "@/lib/api/endpoints/client-sessions";
 import { formatDateTime } from "@/lib/utils/format";
 import { useAsync } from "@/lib/hooks/use-async";
+import { useLocale } from "@/lib/i18n/context";
 import { Loading } from "@/components/ui/loading";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
@@ -92,17 +93,19 @@ async function loadHome(): Promise<HomeData> {
 }
 
 export default function ClientHomePage() {
+  const { t, locale } = useLocale();
   const { data, error, initial, reload } = useAsync(
     "client-home",
     useCallback(() => loadHome(), [])
   );
 
   if (initial) return <Loading />;
-  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (error)
+    return <ErrorState message={error} onRetry={reload} retryLabel={t("common.retry")} />;
   if (!data) return null;
 
   if (!data.programName && data.recent.length === 0) {
-    return <EmptyState message="No programs assigned yet. Ask your coach!" />;
+    return <EmptyState message={t("program.noneAssigned")} />;
   }
 
   return (
@@ -117,16 +120,16 @@ export default function ClientHomePage() {
           className="block rounded-lg border border-zinc-900 bg-zinc-900 p-4 text-white"
         >
           <p className="text-xs uppercase tracking-wide text-zinc-400">
-            In progress
+            {t("common.inProgress")}
           </p>
-          <p className="mt-1 font-medium">Resume your workout</p>
+          <p className="mt-1 font-medium">{t("home.resumeWorkout")}</p>
         </Link>
       )}
 
       {data.programName && (
         <section>
           <p className="text-xs uppercase tracking-wide text-zinc-400">
-            Current program
+            {t("home.currentProgram")}
           </p>
           <h1 className="mt-1 text-2xl font-bold text-zinc-900">
             {data.programName}
@@ -141,19 +144,19 @@ export default function ClientHomePage() {
             >
               <div className="min-w-0">
                 <p className="text-xs text-zinc-400">
-                  Up next · Week {data.nextWorkout.weekPosition}
+                  {t("home.upNext", { week: data.nextWorkout.weekPosition })}
                 </p>
                 <p className="truncate font-medium text-zinc-900">
                   {data.nextWorkout.name}
                 </p>
               </div>
               <span className="shrink-0 rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white">
-                Start
+                {t("home.start")}
               </span>
             </Link>
           ) : (
             <p className="mt-3 rounded-lg border border-zinc-200 bg-white p-4 text-sm text-zinc-500">
-              Every workout in this program is done. Nice work.
+              {t("home.allDone")}
             </p>
           )}
 
@@ -162,7 +165,7 @@ export default function ClientHomePage() {
               href={`/client/programs/${data.programId}`}
               className="mt-2 inline-block text-sm text-zinc-500 hover:text-zinc-700"
             >
-              View full program &rarr;
+              {t("home.viewFullProgram")} &rarr;
             </Link>
           )}
         </section>
@@ -171,7 +174,7 @@ export default function ClientHomePage() {
       {data.recent.length > 0 && (
         <section>
           <h2 className="mb-2 text-sm font-semibold text-zinc-800">
-            Recent activity
+            {t("home.recentActivity")}
           </h2>
           <div className="space-y-2">
             {data.recent.map((s) => (
@@ -181,10 +184,10 @@ export default function ClientHomePage() {
                 className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm transition-colors hover:border-zinc-300"
               >
                 <span className="min-w-0 truncate text-zinc-900">
-                  {formatDateTime(s.started_at)}
+                  {formatDateTime(s.started_at, locale)}
                 </span>
                 <span className="shrink-0 text-zinc-400">
-                  {s.completed_at ? "Completed" : "In progress"}
+                  {s.completed_at ? t("common.completed") : t("common.inProgress")}
                 </span>
               </Link>
             ))}

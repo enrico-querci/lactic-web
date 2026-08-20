@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getObjectUrl } from "@/lib/api/client";
+import { useLocale } from "@/lib/i18n/context";
 
 interface ExerciseAnimationProps {
   /** Lactic path from the API. Never a provider URL. */
@@ -26,6 +27,7 @@ interface ExerciseAnimationProps {
  * the provider can fail, and the plan requires a retry path.
  */
 export function ExerciseAnimation({ animationUrl, alt }: ExerciseAnimationProps) {
+  const { t } = useLocale();
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -66,7 +68,7 @@ export function ExerciseAnimation({ animationUrl, alt }: ExerciseAnimationProps)
   if (!animationUrl) {
     return (
       <div className="flex h-48 items-center justify-center rounded-md bg-zinc-100 text-sm text-zinc-400">
-        No animation available
+        {t("exercise.noAnimation")}
       </div>
     );
   }
@@ -74,13 +76,13 @@ export function ExerciseAnimation({ animationUrl, alt }: ExerciseAnimationProps)
   if (failed) {
     return (
       <div className="flex h-48 flex-col items-center justify-center gap-2 rounded-md bg-zinc-100 text-sm text-zinc-500">
-        <span>Animation unavailable</span>
+        <span>{t("exercise.animationUnavailable")}</span>
         <button
           type="button"
           onClick={retry}
           className="rounded-md border border-zinc-300 bg-white px-3 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
         >
-          Retry
+          {t("common.retry")}
         </button>
       </div>
     );
@@ -93,7 +95,7 @@ export function ExerciseAnimation({ animationUrl, alt }: ExerciseAnimationProps)
         role="status"
         aria-live="polite"
       >
-        Loading animation…
+        {t("exercise.loadingAnimation")}
       </div>
     );
   }

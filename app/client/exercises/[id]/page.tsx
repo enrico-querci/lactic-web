@@ -4,11 +4,13 @@ import { useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getExerciseHistory } from "@/lib/api/endpoints/client-exercises";
 import { useAsync } from "@/lib/hooks/use-async";
+import { useLocale } from "@/lib/i18n/context";
 import { Loading } from "@/components/ui/loading";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 
 export default function ExerciseHistoryPage() {
+  const { t } = useLocale();
   const params = useParams();
   const router = useRouter();
   const exerciseId = Number(params.id);
@@ -19,7 +21,8 @@ export default function ExerciseHistoryPage() {
   );
 
   if (initial) return <Loading />;
-  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (error)
+    return <ErrorState message={error} onRetry={reload} retryLabel={t("common.retry")} />;
 
   const history = data ?? [];
 
@@ -29,23 +32,23 @@ export default function ExerciseHistoryPage() {
         onClick={() => router.back()}
         className="mb-4 text-sm text-zinc-500 hover:text-zinc-700"
       >
-        &larr; Back
+        &larr; {t("common.back")}
       </button>
 
       <h1 className="mb-6 text-2xl font-bold text-zinc-900">
-        Exercise History
+        {t("exercise.history")}
       </h1>
 
       {history.length === 0 ? (
-        <EmptyState message="No history for this exercise yet" />
+        <EmptyState message={t("exercise.noHistory")} />
       ) : (
         <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
           <table className="w-full">
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                <th className="px-6 py-3">Set</th>
-                <th className="px-6 py-3">Weight (kg)</th>
-                <th className="px-6 py-3">Reps</th>
+                <th className="px-6 py-3">{t("exercise.tableSet")}</th>
+                <th className="px-6 py-3">{t("exercise.tableWeight")}</th>
+                <th className="px-6 py-3">{t("exercise.tableReps")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200">

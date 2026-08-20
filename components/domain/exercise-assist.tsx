@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { getExerciseHistory } from "@/lib/api/endpoints/client-exercises";
 import type { Exercise } from "@/lib/api/types";
 import { useAsync } from "@/lib/hooks/use-async";
+import { useLocale } from "@/lib/i18n/context";
 import { ExerciseAnimation } from "@/components/domain/exercise-animation";
 
 interface ExerciseAssistProps {
@@ -23,6 +24,7 @@ interface ExerciseAssistProps {
  * looked at.
  */
 export function ExerciseAssist({ exercise }: ExerciseAssistProps) {
+  const { t } = useLocale();
   const [showDemo, setShowDemo] = useState(false);
 
   const { data: history, error } = useAsync(
@@ -40,7 +42,7 @@ export function ExerciseAssist({ exercise }: ExerciseAssistProps) {
     <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
       {last && Number.isFinite(lastWeight) ? (
         <span className="text-zinc-500">
-          Last time:{" "}
+          {t("exercise.lastTime")}{" "}
           <span className="font-medium text-zinc-700">
             {lastWeight}kg × {last.reps}
           </span>
@@ -50,9 +52,9 @@ export function ExerciseAssist({ exercise }: ExerciseAssistProps) {
         // "you've never done this," which is false and actively misleading
         // when the real story is "we couldn't check." A trainee mid-set who
         // sees the wrong one has no way to tell the difference.
-        <span className="text-zinc-400">Couldn&apos;t load your last time</span>
+        <span className="text-zinc-400">{t("exercise.lastTimeFailed")}</span>
       ) : (
-        <span className="text-zinc-400">First time doing this</span>
+        <span className="text-zinc-400">{t("exercise.firstTime")}</span>
       )}
 
       {exercise.has_animation && (
@@ -62,7 +64,7 @@ export function ExerciseAssist({ exercise }: ExerciseAssistProps) {
           className="text-zinc-500 underline underline-offset-2 hover:text-zinc-700"
           aria-expanded={showDemo}
         >
-          {showDemo ? "Hide demo" : "Show demo"}
+          {showDemo ? t("exercise.hideDemo") : t("exercise.showDemo")}
         </button>
       )}
 
@@ -70,7 +72,7 @@ export function ExerciseAssist({ exercise }: ExerciseAssistProps) {
         <div className="mt-2 w-full">
           <ExerciseAnimation
             animationUrl={exercise.animation_url}
-            alt={`${exercise.name} demonstration`}
+            alt={t("exercise.demonstrationAlt", { name: exercise.name })}
           />
         </div>
       )}
