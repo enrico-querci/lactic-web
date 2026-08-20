@@ -71,6 +71,13 @@ export function ExercisePicker({ onSelect, onCancel }: ExercisePickerProps) {
           Cancel
         </button>
       </div>
+      {/* Non-blocking: taxonomy only feeds the filter dropdowns above, so a
+          failure here degrades filtering, not the exercise list below. */}
+      {taxonomy.error && (
+        <p className="mt-1 text-xs text-zinc-400">
+          Filters unavailable ({taxonomy.error})
+        </p>
+      )}
 
       {list.error && (
         <div className="mb-2 flex items-center justify-between rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

@@ -78,6 +78,14 @@ export default function ExercisesPage() {
       </div>
 
       <ExerciseFilters values={filters} taxonomy={taxonomy.data} onChange={applyFilters} />
+      {/* Non-blocking: taxonomy only feeds the filter dropdowns, so a failure
+          here degrades filtering, not the list itself. Replacing the whole
+          page for this would be a regression, not a fix. */}
+      {taxonomy.error && (
+        <p className="mb-2 text-xs text-zinc-400">
+          Filters unavailable ({taxonomy.error})
+        </p>
+      )}
 
       {list.error && (
         <div className="mb-4 flex items-center justify-between rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

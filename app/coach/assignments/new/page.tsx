@@ -1,38 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getPrograms } from "@/lib/api/endpoints/programs";
 import { getClients } from "@/lib/api/endpoints/clients";
 import { createProgramAssignment } from "@/lib/api/endpoints/program-assignments";
-import type { Program, User } from "@/lib/api/types";
+import { useAsync } from "@/lib/hooks/use-async";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
+import { ErrorState } from "@/components/ui/error-state";
+import { ErrorBanner } from "@/components/ui/error-banner";
 
 export default function NewAssignmentPage() {
   const router = useRouter();
-  const [programs, setPrograms] = useState<Program[]>([]);
-  const [clients, setClients] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const query = useAsync(
+    "assignment-form-data",
+    useCallback(() => Promise.all([getPrograms(), getClients()]), [])
+  );
+  const [programs, clients] = query.data ?? [[], []];
 
   const [programId, setProgramId] = useState("");
   const [clientId, setClientId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    Promise.all([getPrograms(), getClients()])
-      .then(([p, c]) => {
-        setPrograms(p);
-        setClients(c);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setSubmitError(null);
     try {
       await createProgramAssignment({
         program_id: Number(programId),
@@ -41,18 +38,26 @@ export default function NewAssignmentPage() {
         notes: notes || undefined,
       });
       router.push("/coach/assignments");
-    } catch {
+    } catch (err) {
       setSaving(false);
+      setSubmitError(
+        err instanceof Error ? err.message : "Could not create this assignment"
+      );
     }
   };
 
-  if (loading) return <Loading />;
+  if (query.initial) return <Loading />;
+  if (query.error) return <ErrorState message={query.error} onRetry={query.reload} />;
 
   return (
     <div className="mx-auto max-w-lg">
       <h1 className="mb-6 text-2xl font-bold text-zinc-900">
         New Assignment
       </h1>
+
+      {submitError && (
+        <ErrorBanner message={submitError} onDismiss={() => setSubmitError(null)} />
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

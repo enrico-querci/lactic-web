@@ -12,6 +12,8 @@ import { useAsync } from "@/lib/hooks/use-async";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
+import { ErrorBanner } from "@/components/ui/error-banner";
 
 const STATUS_OPTIONS = [
   { value: "", label: "All" },
@@ -102,23 +104,13 @@ export default function AssignmentsPage() {
       </div>
 
       {actionError && (
-        <div
-          role="alert"
-          className="mb-4 flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-        >
-          <span>{actionError}</span>
-          <button
-            type="button"
-            onClick={() => setActionError(null)}
-            className="shrink-0 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium hover:bg-red-50"
-          >
-            Dismiss
-          </button>
-        </div>
+        <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />
       )}
 
       {loading ? (
         <Loading />
+      ) : query.error ? (
+        <ErrorState message={query.error} onRetry={query.reload} />
       ) : assignments.length === 0 ? (
         <EmptyState message="No assignments found" />
       ) : (

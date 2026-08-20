@@ -1,31 +1,38 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { getPrograms, deleteProgram } from "@/lib/api/endpoints/programs";
-import type { Program } from "@/lib/api/types";
 import { formatDate } from "@/lib/utils/format";
+import { useAsync } from "@/lib/hooks/use-async";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
+import { ErrorBanner } from "@/components/ui/error-banner";
 
 export default function ProgramsPage() {
-  const [programs, setPrograms] = useState<Program[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getPrograms()
-      .then(setPrograms)
-      .finally(() => setLoading(false));
-  }, []);
+  const query = useAsync("programs", useCallback(() => getPrograms(), []));
+  const programs = query.data ?? [];
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this program?")) return;
-    await deleteProgram(id);
-    setPrograms((prev) => prev.filter((p) => p.id !== id));
+    setBusyId(id);
+    setActionError(null);
+    try {
+      await deleteProgram(id);
+      query.mutate((prev) => (prev ?? []).filter((p) => p.id !== id));
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Could not delete this program");
+    } finally {
+      setBusyId(null);
+    }
   };
 
-  if (loading) return <Loading />;
+  if (query.initial) return <Loading />;
+  if (query.error) return <ErrorState message={query.error} onRetry={query.reload} />;
 
   return (
     <div>
@@ -35,6 +42,10 @@ export default function ProgramsPage() {
           <Button>New Program</Button>
         </Link>
       </div>
+
+      {actionError && (
+        <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />
+      )}
 
       {programs.length === 0 ? (
         <EmptyState message="No programs yet. Create your first one!" />
@@ -75,9 +86,10 @@ export default function ProgramsPage() {
                     <Button
                       variant="danger"
                       size="sm"
+                      disabled={busyId === program.id}
                       onClick={() => handleDelete(program.id)}
                     >
-                      Delete
+                      {busyId === program.id ? "Working…" : "Delete"}
                     </Button>
                   </td>
                 </tr>

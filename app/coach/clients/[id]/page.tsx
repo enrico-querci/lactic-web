@@ -1,31 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback } from "react";
 import { useParams } from "next/navigation";
 import { getClient, getClientProgress } from "@/lib/api/endpoints/clients";
-import type { User, WorkoutSession } from "@/lib/api/types";
+import { useAsync } from "@/lib/hooks/use-async";
 import { Loading } from "@/components/ui/loading";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { formatDateTime, formatDuration } from "@/lib/utils/format";
 
 export default function ClientDetailPage() {
   const params = useParams();
   const clientId = Number(params.id);
 
-  const [client, setClient] = useState<User | null>(null);
-  const [sessions, setSessions] = useState<WorkoutSession[]>([]);
-  const [loading, setLoading] = useState(true);
+  const query = useAsync(
+    String(clientId),
+    useCallback(
+      () => Promise.all([getClient(clientId), getClientProgress(clientId)]),
+      [clientId]
+    )
+  );
+  const [client, sessions] = query.data ?? [null, []];
 
-  useEffect(() => {
-    Promise.all([getClient(clientId), getClientProgress(clientId)])
-      .then(([c, s]) => {
-        setClient(c);
-        setSessions(s);
-      })
-      .finally(() => setLoading(false));
-  }, [clientId]);
-
-  if (loading) return <Loading />;
+  if (query.initial) return <Loading />;
+  if (query.error) return <ErrorState message={query.error} onRetry={query.reload} />;
   if (!client) return <div>Client not found</div>;
 
   return (

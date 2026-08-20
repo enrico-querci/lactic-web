@@ -5,27 +5,35 @@ import { useRouter } from "next/navigation";
 import { createProgram } from "@/lib/api/endpoints/programs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ErrorBanner } from "@/components/ui/error-banner";
 
 export default function NewProgramPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setSubmitError(null);
     try {
       const program = await createProgram({ name, description });
       router.push(`/coach/programs/${program.id}`);
-    } catch {
+    } catch (err) {
       setSaving(false);
+      setSubmitError(err instanceof Error ? err.message : "Could not create this program");
     }
   };
 
   return (
     <div className="mx-auto max-w-lg">
       <h1 className="mb-6 text-2xl font-bold text-zinc-900">New Program</h1>
+
+      {submitError && (
+        <ErrorBanner message={submitError} onDismiss={() => setSubmitError(null)} />
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input

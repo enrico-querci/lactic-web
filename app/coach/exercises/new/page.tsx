@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createExercise } from "@/lib/api/endpoints/exercises";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ErrorBanner } from "@/components/ui/error-banner";
 
 const MUSCLE_GROUPS = [
   "Chest",
@@ -29,10 +30,12 @@ export default function NewExercisePage() {
   const [videoUrl, setVideoUrl] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setSubmitError(null);
     try {
       await createExercise({
         name,
@@ -41,8 +44,9 @@ export default function NewExercisePage() {
         thumbnail_url: thumbnailUrl || undefined,
       });
       router.push("/coach/exercises");
-    } catch {
+    } catch (err) {
       setSaving(false);
+      setSubmitError(err instanceof Error ? err.message : "Could not create this exercise");
     }
   };
 
@@ -51,6 +55,10 @@ export default function NewExercisePage() {
       <h1 className="mb-6 text-2xl font-bold text-zinc-900">
         New Custom Exercise
       </h1>
+
+      {submitError && (
+        <ErrorBanner message={submitError} onDismiss={() => setSubmitError(null)} />
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
