@@ -1,33 +1,40 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import {
   getWorkoutTemplates,
   deleteWorkoutTemplate,
 } from "@/lib/api/endpoints/workout-templates";
-import type { WorkoutTemplate } from "@/lib/api/types";
 import { formatDate } from "@/lib/utils/format";
+import { useAsync } from "@/lib/hooks/use-async";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
+import { ErrorBanner } from "@/components/ui/error-banner";
 
 export default function TemplatesPage() {
-  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getWorkoutTemplates()
-      .then(setTemplates)
-      .finally(() => setLoading(false));
-  }, []);
+  const query = useAsync("templates", useCallback(() => getWorkoutTemplates(), []));
+  const templates = query.data ?? [];
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this template?")) return;
-    await deleteWorkoutTemplate(id);
-    setTemplates((prev) => prev.filter((t) => t.id !== id));
+    setBusyId(id);
+    setActionError(null);
+    try {
+      await deleteWorkoutTemplate(id);
+      query.mutate((prev) => (prev ?? []).filter((t) => t.id !== id));
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Could not delete this template");
+    } finally {
+      setBusyId(null);
+    }
   };
 
-  if (loading) return <Loading />;
+  if (query.initial) return <Loading />;
+  if (query.error) return <ErrorState message={query.error} onRetry={query.reload} />;
 
   return (
     <div>
@@ -39,6 +46,10 @@ export default function TemplatesPage() {
           Save workouts as templates and apply them to other weeks.
         </p>
       </div>
+
+      {actionError && (
+        <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />
+      )}
 
       {templates.length === 0 ? (
         <EmptyState message="No templates yet. Save a workout as a template from the program builder." />
@@ -65,9 +76,10 @@ export default function TemplatesPage() {
                     <Button
                       variant="danger"
                       size="sm"
+                      disabled={busyId === template.id}
                       onClick={() => handleDelete(template.id)}
                     >
-                      Delete
+                      {busyId === template.id ? "Working…" : "Delete"}
                     </Button>
                   </td>
                 </tr>

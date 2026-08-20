@@ -25,7 +25,7 @@ interface ExerciseAssistProps {
 export function ExerciseAssist({ exercise }: ExerciseAssistProps) {
   const [showDemo, setShowDemo] = useState(false);
 
-  const { data: history } = useAsync(
+  const { data: history, error } = useAsync(
     `exercise-history:${exercise.id}`,
     useCallback(() => getExerciseHistory(exercise.id), [exercise.id])
   );
@@ -45,6 +45,12 @@ export function ExerciseAssist({ exercise }: ExerciseAssistProps) {
             {lastWeight}kg × {last.reps}
           </span>
         </span>
+      ) : error ? (
+        // Distinct from "First time doing this" on purpose: that reads as
+        // "you've never done this," which is false and actively misleading
+        // when the real story is "we couldn't check." A trainee mid-set who
+        // sees the wrong one has no way to tell the difference.
+        <span className="text-zinc-400">Couldn&apos;t load your last time</span>
       ) : (
         <span className="text-zinc-400">First time doing this</span>
       )}

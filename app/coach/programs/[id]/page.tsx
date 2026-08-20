@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getProgram } from "@/lib/api/endpoints/programs";
@@ -10,35 +10,30 @@ import {
   deleteWorkout,
   duplicateWorkout,
 } from "@/lib/api/endpoints/workouts";
-import type { ProgramExtended } from "@/lib/api/types";
+import { useAsync } from "@/lib/hooks/use-async";
 import { WeekPanel } from "@/components/domain/week-panel";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
+import { ErrorState } from "@/components/ui/error-state";
+import { ErrorBanner } from "@/components/ui/error-banner";
 
 export default function ProgramDetailPage() {
   const params = useParams();
   const programId = Number(params.id);
 
-  const [program, setProgram] = useState<ProgramExtended | null>(null);
-  const [loading, setLoading] = useState(true);
+  const query = useAsync(
+    String(programId),
+    useCallback(() => getProgram(programId), [programId])
+  );
+  const program = query.data;
   const [mutating, setMutating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const reload = useCallback(() => {
-    getProgram(programId)
-      .then(setProgram)
-      .finally(() => setLoading(false));
-  }, [programId]);
-
-  useEffect(() => {
-    reload();
-  }, [reload]);
-
   // Each handler below applies the mutation's own response to `program`
-  // directly instead of calling reload(): reload() used to run after every
-  // add/delete/duplicate and re-fetch the whole program to show a change the
-  // response already described, doubling the requests without ever showing
-  // that one was in flight.
+  // via query.mutate() directly instead of calling query.reload(): reload()
+  // used to run after every add/delete/duplicate and re-fetch the whole
+  // program to show a change the response already described, doubling the
+  // requests without ever showing that one was in flight.
   const runMutation = async (fn: () => Promise<void>) => {
     setMutating(true);
     setActionError(null);
@@ -51,57 +46,46 @@ export default function ProgramDetailPage() {
     }
   };
 
+  // Every handler below is only reachable from JSX that already required
+  // `program` to be non-null to render at all, so `current` here is never
+  // actually null — the `!` reflects that, not an unchecked assumption.
   const handleAddWeek = () =>
     runMutation(async () => {
       if (!program) return;
       const nextPosition = program.weeks.length + 1;
       const week = await createWeek(programId, { position: nextPosition });
-      setProgram((p) =>
-        p ? { ...p, weeks: [...p.weeks, { ...week, workouts: [] }] } : p
-      );
+      query.mutate((p) => ({ ...p!, weeks: [...p!.weeks, { ...week, workouts: [] }] }));
     });
 
   const handleDeleteWeek = (weekId: number) =>
     runMutation(async () => {
       await deleteWeek(programId, weekId);
-      setProgram((p) =>
-        p ? { ...p, weeks: p.weeks.filter((w) => w.id !== weekId) } : p
-      );
+      query.mutate((p) => ({ ...p!, weeks: p!.weeks.filter((w) => w.id !== weekId) }));
     });
 
   const handleAddWorkout = (weekId: number, name: string, day: number) =>
     runMutation(async () => {
       const workout = await createWorkout(programId, weekId, { name, day });
-      setProgram((p) =>
-        p
-          ? {
-              ...p,
-              weeks: p.weeks.map((w) =>
-                w.id === weekId
-                  ? { ...w, workouts: [...w.workouts, workout] }
-                  : w
-              ),
-            }
-          : p
-      );
+      query.mutate((p) => ({
+        ...p!,
+        weeks: p!.weeks.map((w) =>
+          w.id === weekId ? { ...w, workouts: [...w.workouts, workout] } : w
+        ),
+      }));
     });
 
   const handleDeleteWorkout = (weekId: number, workoutId: number) => {
     if (!confirm("Delete this workout?")) return;
     return runMutation(async () => {
       await deleteWorkout(programId, weekId, workoutId);
-      setProgram((p) =>
-        p
-          ? {
-              ...p,
-              weeks: p.weeks.map((w) =>
-                w.id === weekId
-                  ? { ...w, workouts: w.workouts.filter((wk) => wk.id !== workoutId) }
-                  : w
-              ),
-            }
-          : p
-      );
+      query.mutate((p) => ({
+        ...p!,
+        weeks: p!.weeks.map((w) =>
+          w.id === weekId
+            ? { ...w, workouts: w.workouts.filter((wk) => wk.id !== workoutId) }
+            : w
+        ),
+      }));
     });
   };
 
@@ -112,21 +96,16 @@ export default function ProgramDetailPage() {
         target_week_id: weekId,
         day: 1,
       });
-      setProgram((p) =>
-        p
-          ? {
-              ...p,
-              weeks: p.weeks.map((w) =>
-                w.id === weekId
-                  ? { ...w, workouts: [...w.workouts, workout] }
-                  : w
-              ),
-            }
-          : p
-      );
+      query.mutate((p) => ({
+        ...p!,
+        weeks: p!.weeks.map((w) =>
+          w.id === weekId ? { ...w, workouts: [...w.workouts, workout] } : w
+        ),
+      }));
     });
 
-  if (loading) return <Loading />;
+  if (query.initial) return <Loading />;
+  if (query.error) return <ErrorState message={query.error} onRetry={query.reload} />;
   if (!program) return <div>Program not found</div>;
 
   return (
@@ -149,19 +128,7 @@ export default function ProgramDetailPage() {
       </div>
 
       {actionError && (
-        <div
-          role="alert"
-          className="mb-4 flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-        >
-          <span>{actionError}</span>
-          <button
-            type="button"
-            onClick={() => setActionError(null)}
-            className="shrink-0 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium hover:bg-red-50"
-          >
-            Dismiss
-          </button>
-        </div>
+        <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />
       )}
 
       {program.weeks.length === 0 ? (

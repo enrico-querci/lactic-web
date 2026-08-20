@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getWorkout } from "@/lib/api/endpoints/workouts";
 import {
@@ -8,11 +8,14 @@ import {
   updateWorkoutExercise,
   deleteWorkoutExercise,
 } from "@/lib/api/endpoints/workout-exercises";
-import type { WorkoutExtended, Exercise } from "@/lib/api/types";
+import type { Exercise } from "@/lib/api/types";
+import { useAsync } from "@/lib/hooks/use-async";
 import { ExercisePicker } from "@/components/domain/exercise-picker";
 import { WorkoutExerciseForm } from "@/components/domain/workout-exercise-form";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
+import { ErrorState } from "@/components/ui/error-state";
+import { ErrorBanner } from "@/components/ui/error-banner";
 
 export default function WorkoutDetailPage() {
   const params = useParams();
@@ -21,27 +24,21 @@ export default function WorkoutDetailPage() {
   const weekId = Number(params.weekId);
   const workoutId = Number(params.workoutId);
 
-  const [workout, setWorkout] = useState<WorkoutExtended | null>(null);
-  const [loading, setLoading] = useState(true);
+  const query = useAsync(
+    String(workoutId),
+    useCallback(() => getWorkout(programId, weekId, workoutId), [programId, weekId, workoutId])
+  );
+  const workout = query.data;
   const [showPicker, setShowPicker] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [mutating, setMutating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const reload = useCallback(() => {
-    getWorkout(programId, weekId, workoutId)
-      .then(setWorkout)
-      .finally(() => setLoading(false));
-  }, [programId, weekId, workoutId]);
-
-  useEffect(() => {
-    reload();
-  }, [reload]);
-
-  // Each handler applies the mutation's own response to `workout` directly
-  // instead of calling reload(): a second full GET after every add/update/
-  // remove was pure round-trip cost for data the response already carried,
-  // and neither request gave any visible sign it was happening.
+  // Each handler applies the mutation's own response to `workout` via
+  // query.mutate() directly instead of calling query.reload(): a second full
+  // GET after every add/update/remove was pure round-trip cost for data the
+  // response already carried, and neither request gave any visible sign it
+  // was happening.
   const runMutation = async (fn: () => Promise<void>) => {
     setMutating(true);
     setActionError(null);
@@ -54,6 +51,9 @@ export default function WorkoutDetailPage() {
     }
   };
 
+  // Every handler below is only reachable from JSX that already required
+  // `workout` to be non-null to render at all, so `current` here is never
+  // actually null — the `!` reflects that, not an unchecked assumption.
   const handleAddExercise = (exercise: Exercise) =>
     runMutation(async () => {
       if (!workout) return;
@@ -67,11 +67,10 @@ export default function WorkoutDetailPage() {
         reps: 10,
         rest_seconds: 90,
       });
-      setWorkout((w) =>
-        w
-          ? { ...w, workout_exercises: [...w.workout_exercises, workoutExercise] }
-          : w
-      );
+      query.mutate((w) => ({
+        ...w!,
+        workout_exercises: [...w!.workout_exercises, workoutExercise],
+      }));
       setShowPicker(false);
     });
 
@@ -89,16 +88,12 @@ export default function WorkoutDetailPage() {
   ) =>
     runMutation(async () => {
       const updated = await updateWorkoutExercise(workoutId, exerciseId, data);
-      setWorkout((w) =>
-        w
-          ? {
-              ...w,
-              workout_exercises: w.workout_exercises.map((we) =>
-                we.id === exerciseId ? updated : we
-              ),
-            }
-          : w
-      );
+      query.mutate((w) => ({
+        ...w!,
+        workout_exercises: w!.workout_exercises.map((we) =>
+          we.id === exerciseId ? updated : we
+        ),
+      }));
       setEditingId(null);
     });
 
@@ -106,20 +101,15 @@ export default function WorkoutDetailPage() {
     if (!confirm("Remove this exercise?")) return;
     return runMutation(async () => {
       await deleteWorkoutExercise(workoutId, exerciseId);
-      setWorkout((w) =>
-        w
-          ? {
-              ...w,
-              workout_exercises: w.workout_exercises.filter(
-                (we) => we.id !== exerciseId
-              ),
-            }
-          : w
-      );
+      query.mutate((w) => ({
+        ...w!,
+        workout_exercises: w!.workout_exercises.filter((we) => we.id !== exerciseId),
+      }));
     });
   };
 
-  if (loading) return <Loading />;
+  if (query.initial) return <Loading />;
+  if (query.error) return <ErrorState message={query.error} onRetry={query.reload} />;
   if (!workout) return <div>Workout not found</div>;
 
   return (
@@ -147,19 +137,7 @@ export default function WorkoutDetailPage() {
       </div>
 
       {actionError && (
-        <div
-          role="alert"
-          className="mb-4 flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-        >
-          <span>{actionError}</span>
-          <button
-            type="button"
-            onClick={() => setActionError(null)}
-            className="shrink-0 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium hover:bg-red-50"
-          >
-            Dismiss
-          </button>
-        </div>
+        <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />
       )}
 
       <div className={`space-y-3 transition-opacity ${mutating ? "opacity-60" : ""}`}>
