@@ -124,6 +124,23 @@ The latest completed milestone is secure client invitation onboarding:
 - Never write secret values in source, documentation, logs, issues, or commits.
   Document variable names only.
 
+#### Error tracking
+
+- Provider: Sentry, on both `lactic-api` and `lactic-web`.
+- Railway variable: `SENTRY_DSN`. Vercel variables: `NEXT_PUBLIC_SENTRY_DSN`,
+  and `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` (none `NEXT_PUBLIC_`
+  — build-time only, for source map upload; without them stack traces show
+  minified chunk names instead of real filenames and line numbers). The
+  Sentry Vercel marketplace integration provisions these three
+  automatically when connected; otherwise they're created by hand from a
+  Sentry auth token.
+- Optional everywhere: both apps run with tracking off when the DSN is unset,
+  which is how local development and the test suites run.
+- Error reports carry only `{ id, role }` for the current user — never email
+  or name. Client records hold real gym members' personal data, so no report
+  should be able to leak it even indirectly (see `config/initializers/sentry.rb`
+  for the full scrubbing rationale).
+
 ### 2.5 Last verified production state
 
 Verified on **2026-08-04**:

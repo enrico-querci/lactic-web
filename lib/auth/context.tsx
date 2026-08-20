@@ -8,6 +8,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
+import * as Sentry from "@sentry/nextjs";
 import type { User } from "@/lib/api/types";
 import {
   setAccessToken,
@@ -17,6 +18,14 @@ import {
   get,
   del,
 } from "@/lib/api/client";
+
+// The one place identity is mirrored to Sentry, kept to id + role — never
+// email or name, since client records hold real gym members' personal data.
+// Centralized so a future call site can't accidentally widen it.
+function identifySentryUser(user: User | null) {
+  Sentry.setUser(user ? { id: String(user.id) } : null);
+  Sentry.setTag("role", user?.role ?? null);
+}
 
 interface AuthContextValue {
   user: User | null;
@@ -68,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const me = await get<User>("/me");
         setUser(me);
+        identifySentryUser(me);
       } catch {
         setAccessToken(null);
         setRefreshToken(null);
@@ -88,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessToken(res.access_token);
     setRefreshToken(res.refresh_token);
     setUser(res.user);
+    identifySentryUser(res.user);
   }, []);
 
   // Real auth (Google/Apple)
@@ -110,6 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAccessToken(res.access_token);
       setRefreshToken(res.refresh_token);
       setUser(res.user);
+      identifySentryUser(res.user);
       return res.user;
     },
     []
@@ -132,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessToken(null);
     setRefreshToken(null);
     setUser(null);
+    identifySentryUser(null);
   }, []);
 
   return (
