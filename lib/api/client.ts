@@ -2,6 +2,24 @@ import type { PageMeta } from "@/lib/api/types";
 
 const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1`;
 
+/**
+ * Every API failure throws one of these. `message` is still the plain
+ * string every existing caller renders as-is, so nothing downstream had to
+ * change — `status` and `path` are additive, for callers (currently just
+ * lib/hooks/use-async.ts) that want to tell a routine 4xx apart from a
+ * genuine 5xx or network failure without parsing the message text.
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public path: string
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 let accessToken: string | null = null;
 let refreshPromise: Promise<boolean> | null = null;
 
@@ -122,7 +140,11 @@ async function rawRequest(path: string, options: RequestOptions): Promise<Respon
       if (typeof window !== "undefined") {
         window.location.href = "/login";
       }
-      throw new Error("Session expired");
+      // status 401 here is nominal, not read off a response — refresh
+      // itself failed, so there is no response to read a real status from.
+      // Filtered as expected-not-a-bug in useAsync the same way any other
+      // 401 is: the session genuinely did just expire.
+      throw new ApiError("Session expired", 401, path);
     }
   }
 
@@ -131,7 +153,7 @@ async function rawRequest(path: string, options: RequestOptions): Promise<Respon
     const validationErrors = Array.isArray(error.errors)
       ? error.errors.join(", ")
       : null;
-    throw new Error(error.error || validationErrors || `HTTP ${res.status}`);
+    throw new ApiError(error.error || validationErrors || `HTTP ${res.status}`, res.status, path);
   }
 
   return res;

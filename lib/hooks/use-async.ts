@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import * as Sentry from "@sentry/nextjs";
+import { ApiError } from "@/lib/api/client";
 
 export interface AsyncState<T> {
   data: T | null;
@@ -55,6 +57,19 @@ export function useAsync<T>(key: string, fetcher: () => Promise<T>): AsyncState<
       .catch((e: unknown) => {
         if (cancelled) return;
         const message = e instanceof Error ? e.message : "Something went wrong";
+
+        // A 4xx ApiError is routine — validation failures, a missing or
+        // forbidden resource, a just-expired session. Reporting every one
+        // would be noise, and 403s are already captured server-side
+        // (Authorizable#report_forbidden) from the vantage point that
+        // actually enforced the rule. Anything else — 5xx, or not an
+        // ApiError at all (a network failure, an unexpected shape) — is
+        // worth knowing about.
+        const status = e instanceof ApiError ? e.status : null;
+        if (status === null || status >= 500) {
+          Sentry.captureException(e);
+        }
+
         setResult({ key, attempt, data: null, error: message });
       });
 
