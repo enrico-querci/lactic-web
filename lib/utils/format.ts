@@ -1,13 +1,17 @@
-export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("en-US", {
+import type { Locale } from "@/lib/i18n/context";
+
+const INTL_LOCALE: Record<Locale, string> = { en: "en-US", it: "it-IT" };
+
+export function formatDate(dateString: string, locale: Locale = "en"): string {
+  return new Date(dateString).toLocaleDateString(INTL_LOCALE[locale], {
     year: "numeric",
     month: "short",
     day: "numeric",
   });
 }
 
-export function formatDateTime(dateString: string): string {
-  return new Date(dateString).toLocaleString("en-US", {
+export function formatDateTime(dateString: string, locale: Locale = "en"): string {
+  return new Date(dateString).toLocaleString(INTL_LOCALE[locale], {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -16,6 +20,9 @@ export function formatDateTime(dateString: string): string {
   });
 }
 
+// "min"/"h" aren't translated per-locale: kept as universally-understood
+// abbreviations (also how Italian gym/fitness apps commonly render duration)
+// rather than introducing a locale branch for two characters.
 export function formatDuration(startedAt: string, completedAt: string): string {
   const start = new Date(startedAt).getTime();
   const end = new Date(completedAt).getTime();
@@ -32,8 +39,15 @@ export function formatVolumeSets(volumeSets: Record<string, number>): string {
     .join(", ");
 }
 
-export const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+// Not sourced from the en.ts/it.ts message files: those are read through
+// useLocale()'s t(), which is a hook and can't be called from this plain
+// utility module. A locale-keyed lookup here keeps format.ts self-contained
+// while still being real, correct Italian rather than an untranslated array.
+const DAY_NAMES: Record<Locale, string[]> = {
+  en: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  it: ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
+};
 
-export function dayName(day: number): string {
-  return DAY_NAMES[day - 1] || `Day ${day}`;
+export function dayName(day: number, locale: Locale = "en"): string {
+  return DAY_NAMES[locale][day - 1] || `Day ${day}`;
 }

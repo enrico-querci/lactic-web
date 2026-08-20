@@ -4,15 +4,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Script from "next/script";
 import {
   acceptClientInvitation,
   getClientInvitation,
 } from "@/lib/api/endpoints/clients";
 import type { ClientInvitation } from "@/lib/api/types";
 import { useAuth } from "@/lib/auth/context";
+import { useGoogleIdentityScript } from "@/lib/auth/use-google-script";
+import { useLocale } from "@/lib/i18n/context";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -21,6 +23,7 @@ export default function ClientInvitationPage() {
   const token = params.token;
   const router = useRouter();
   const { user, loading: authLoading, loginWithProvider, logout } = useAuth();
+  const { locale } = useLocale();
   const [invitation, setInvitation] = useState<ClientInvitation | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -90,6 +93,8 @@ export default function ClientInvitationPage() {
     initializeGoogle();
   }, [initializeGoogle]);
 
+  useGoogleIdentityScript(locale, initializeGoogle);
+
   const handleAccept = async () => {
     setSubmitting(true);
     setError(null);
@@ -111,14 +116,11 @@ export default function ClientInvitationPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 p-4">
-      <Script
-        src="https://accounts.google.com/gsi/client"
-        strategy="afterInteractive"
-        onReady={initializeGoogle}
-      />
-
       <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-zinc-900">Join Lactic</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-zinc-900">Join Lactic</h1>
+          <LanguageSwitcher />
+        </div>
 
         {error && (
           <div className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">

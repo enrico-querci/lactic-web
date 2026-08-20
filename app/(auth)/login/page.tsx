@@ -4,8 +4,10 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Script from "next/script";
 import { useAuth } from "@/lib/auth/context";
+import { useGoogleIdentityScript } from "@/lib/auth/use-google-script";
+import { useLocale } from "@/lib/i18n/context";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const IS_DEV =
@@ -14,6 +16,7 @@ const IS_DEV =
 
 export default function LoginPage() {
   const { login, loginWithProvider, user } = useAuth();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,12 +46,12 @@ export default function LoginPage() {
       try {
         await loginWithProvider("google", response.credential);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Google login failed");
+        setError(err instanceof Error ? err.message : t("login.googleFailed"));
       } finally {
         setLoading(false);
       }
     };
-  }, [loginWithProvider]);
+  }, [loginWithProvider, t]);
 
   const initializeGoogle = () => {
     if (!GOOGLE_CLIENT_ID || !googleButtonRef.current || !window.google) return;
@@ -66,6 +69,8 @@ export default function LoginPage() {
     });
   };
 
+  useGoogleIdentityScript(locale, initializeGoogle);
+
   // Dev login handler
   const handleDevLogin = async (email: string, role: "coach" | "client") => {
     setError(null);
@@ -74,7 +79,7 @@ export default function LoginPage() {
       await login(email);
       redirectAfterLogin(role);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : t("login.devFailed"));
     } finally {
       setLoading(false);
     }
@@ -84,15 +89,12 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50">
-      <Script
-        src="https://accounts.google.com/gsi/client"
-        strategy="afterInteractive"
-        onLoad={initializeGoogle}
-      />
-
       <div className="w-full max-w-sm rounded-lg bg-white p-8 shadow-sm">
-        <h1 className="mb-2 text-2xl font-bold text-zinc-900">Lactic</h1>
-        <p className="mb-8 text-sm text-zinc-500">Sign in to continue</p>
+        <div className="mb-2 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-zinc-900">Lactic</h1>
+          <LanguageSwitcher />
+        </div>
+        <p className="mb-8 text-sm text-zinc-500">{t("login.subtitle")}</p>
 
         {error && (
           <div className="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">

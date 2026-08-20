@@ -4,11 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RoleGuard } from "@/lib/auth/guard";
 import { useAuth } from "@/lib/auth/context";
+import { useLocale } from "@/lib/i18n/context";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import type { ReactNode } from "react";
+import type { MessageKey } from "@/lib/i18n/messages/en";
 
-const NAV_ITEMS = [
-  { href: "/client/programs", label: "Programs" },
-  { href: "/client/history", label: "History" },
+const NAV_ITEMS: { href: string; labelKey: MessageKey }[] = [
+  { href: "/client/programs", labelKey: "nav.programs" },
+  { href: "/client/history", labelKey: "nav.history" },
 ];
 
 // "/client" prefixes every other route, so startsWith would mark Home active
@@ -29,6 +32,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
 function TopNav() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { t } = useLocale();
 
   const handleLogout = async () => {
     await logout();
@@ -51,7 +55,7 @@ function TopNav() {
                   : "text-zinc-500 hover:text-zinc-700"
               }`}
             >
-              Home
+              {t("nav.home")}
             </Link>
             {NAV_ITEMS.map((item) => {
               const isActive = pathname.startsWith(item.href);
@@ -65,7 +69,7 @@ function TopNav() {
                       : "text-zinc-500 hover:text-zinc-700"
                   }`}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               );
             })}
@@ -74,6 +78,7 @@ function TopNav() {
         {/* The name is the first thing to go on a narrow screen: the client
             knows who they are, and "Log out" must stay reachable. */}
         <div className="flex shrink-0 items-center gap-3">
+          <LanguageSwitcher />
           <span className="hidden text-sm text-zinc-500 sm:inline">
             {user?.name}
           </span>
@@ -81,7 +86,7 @@ function TopNav() {
             onClick={handleLogout}
             className="text-sm text-zinc-400 hover:text-zinc-600"
           >
-            Log out
+            {t("nav.logOut")}
           </button>
         </div>
       </div>
