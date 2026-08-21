@@ -11,6 +11,7 @@ import {
   duplicateWorkout,
 } from "@/lib/api/endpoints/workouts";
 import { useAsync } from "@/lib/hooks/use-async";
+import { useLocale } from "@/lib/i18n/context";
 import { WeekPanel } from "@/components/domain/week-panel";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
@@ -18,6 +19,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { ErrorBanner } from "@/components/ui/error-banner";
 
 export default function ProgramDetailPage() {
+  const { t } = useLocale();
   const params = useParams();
   const programId = Number(params.id);
 
@@ -40,7 +42,7 @@ export default function ProgramDetailPage() {
     try {
       await fn();
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : "That action failed");
+      setActionError(e instanceof Error ? e.message : t("program.actionFailed"));
     } finally {
       setMutating(false);
     }
@@ -75,7 +77,7 @@ export default function ProgramDetailPage() {
     });
 
   const handleDeleteWorkout = (weekId: number, workoutId: number) => {
-    if (!confirm("Delete this workout?")) return;
+    if (!confirm(t("program.confirmDeleteWorkout"))) return;
     return runMutation(async () => {
       await deleteWorkout(programId, weekId, workoutId);
       query.mutate((p) => ({
@@ -105,8 +107,11 @@ export default function ProgramDetailPage() {
     });
 
   if (query.initial) return <Loading />;
-  if (query.error) return <ErrorState message={query.error} onRetry={query.reload} />;
-  if (!program) return <div>Program not found</div>;
+  if (query.error)
+    return (
+      <ErrorState message={query.error} onRetry={query.reload} retryLabel={t("common.retry")} />
+    );
+  if (!program) return <div>{t("program.notFound")}</div>;
 
   return (
     <div>
@@ -119,21 +124,25 @@ export default function ProgramDetailPage() {
         </div>
         <div className="flex gap-2">
           <Link href={`/coach/programs/${programId}/edit`}>
-            <Button variant="secondary">Edit</Button>
+            <Button variant="secondary">{t("common.edit")}</Button>
           </Link>
           <Button onClick={handleAddWeek} disabled={mutating}>
-            {mutating ? "Working…" : "+ Add Week"}
+            {mutating ? t("common.working") : t("program.addWeek")}
           </Button>
         </div>
       </div>
 
       {actionError && (
-        <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />
+        <ErrorBanner
+          message={actionError}
+          onDismiss={() => setActionError(null)}
+          dismissLabel={t("common.dismiss")}
+        />
       )}
 
       {program.weeks.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-12 text-center text-zinc-400">
-          <p>No weeks yet. Add your first week to start building.</p>
+          <p>{t("program.noWeeksYet")}</p>
         </div>
       ) : (
         <div className={`space-y-6 transition-opacity ${mutating ? "opacity-60" : ""}`}>

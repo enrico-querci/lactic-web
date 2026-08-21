@@ -1,6 +1,7 @@
 interface ErrorBannerProps {
   message: string;
   onDismiss: () => void;
+  dismissLabel?: string;
 }
 
 /**
@@ -11,8 +12,15 @@ interface ErrorBannerProps {
  * user re-triggers it), unlike ErrorState's onRetry.
  *
  * Was duplicated identically across three coach pages before this existed.
+ *
+ * dismissLabel defaults to English rather than reading useLocale()
+ * internally: this component is coach-only today, but ErrorState (which sits
+ * right next to it in most call sites) can't call the hook — it's also
+ * rendered from app/global-error.tsx, outside LocaleProvider — and matching
+ * that shape here keeps the two consistent rather than one prop-driven and
+ * one not for no functional reason.
  */
-export function ErrorBanner({ message, onDismiss }: ErrorBannerProps) {
+export function ErrorBanner({ message, onDismiss, dismissLabel = "Dismiss" }: ErrorBannerProps) {
   return (
     <div
       role="alert"
@@ -24,7 +32,7 @@ export function ErrorBanner({ message, onDismiss }: ErrorBannerProps) {
         onClick={onDismiss}
         className="shrink-0 rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium hover:bg-red-50"
       >
-        Dismiss
+        {dismissLabel}
       </button>
     </div>
   );

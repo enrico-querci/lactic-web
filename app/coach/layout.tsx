@@ -4,14 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RoleGuard } from "@/lib/auth/guard";
 import { useAuth } from "@/lib/auth/context";
+import { useLocale } from "@/lib/i18n/context";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import type { ReactNode } from "react";
+import type { MessageKey } from "@/lib/i18n/messages/en";
 
-const NAV_ITEMS = [
-  { href: "/coach/programs", label: "Programs" },
-  { href: "/coach/clients", label: "Clients" },
-  { href: "/coach/exercises", label: "Exercises" },
-  { href: "/coach/assignments", label: "Assignments" },
-  { href: "/coach/templates", label: "Templates" },
+const NAV_ITEMS: { href: string; labelKey: MessageKey }[] = [
+  { href: "/coach/programs", labelKey: "nav.programs" },
+  { href: "/coach/clients", labelKey: "nav.clients" },
+  { href: "/coach/exercises", labelKey: "nav.exercises" },
+  { href: "/coach/assignments", labelKey: "nav.assignments" },
+  { href: "/coach/templates", labelKey: "nav.templates" },
 ];
 
 export default function CoachLayout({ children }: { children: ReactNode }) {
@@ -28,6 +31,7 @@ export default function CoachLayout({ children }: { children: ReactNode }) {
 function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { t } = useLocale();
 
   const handleLogout = async () => {
     await logout();
@@ -53,21 +57,24 @@ function Sidebar() {
                   : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
               }`}
             >
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           );
         })}
       </nav>
 
       <div className="border-t border-zinc-200 px-4 py-4">
-        <p className="mb-2 truncate text-sm font-medium text-zinc-700">
-          {user?.name}
-        </p>
+        <div className="mb-3 flex items-center justify-between">
+          <p className="truncate text-sm font-medium text-zinc-700">
+            {user?.name}
+          </p>
+          <LanguageSwitcher />
+        </div>
         <button
           onClick={handleLogout}
           className="text-sm text-zinc-500 hover:text-zinc-700"
         >
-          Log out
+          {t("nav.logOut")}
         </button>
       </div>
     </aside>
