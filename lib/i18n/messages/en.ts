@@ -16,6 +16,7 @@ export const en = {
   "nav.assignments": "Assignments",
   "nav.templates": "Templates",
   "nav.openMenu": "Open menu",
+  "nav.settings": "Settings",
 
   "login.subtitle": "Sign in to continue",
   "login.googleFailed": "Google login failed",
@@ -300,6 +301,15 @@ export const en = {
   "workoutForm.restLabel": "Rest (s)",
   "workoutForm.suggestedWeight": "Suggested Weight (kg)",
   "workoutForm.notesPlaceholder": "Coach notes",
+
+  "settings.title": "Settings",
+  "settings.dangerZone": "Danger zone",
+  "settings.deleteAccountDescription":
+    "Permanently delete your account and all your workout history. This cannot be undone.",
+  "settings.deleteAccount": "Delete my account",
+  "settings.confirmDeleteAccount":
+    "Permanently delete your account? This cannot be undone — all your programs, workouts, and history will be lost.",
+  "settings.deleteAccountFailed": "Could not delete your account",
 } as const;
 
 export type MessageKey = keyof typeof en;
