@@ -12,6 +12,7 @@ export const it: Record<MessageKey, string> = {
   "nav.assignments": "Assegnazioni",
   "nav.templates": "Modelli",
   "nav.openMenu": "Apri il menu",
+  "nav.settings": "Impostazioni",
 
   "login.subtitle": "Accedi per continuare",
   "login.googleFailed": "Accesso con Google non riuscito",
@@ -287,4 +288,13 @@ export const it: Record<MessageKey, string> = {
   "workoutForm.restLabel": "Riposo (s)",
   "workoutForm.suggestedWeight": "Peso consigliato (kg)",
   "workoutForm.notesPlaceholder": "Note del coach",
+
+  "settings.title": "Impostazioni",
+  "settings.dangerZone": "Zona pericolosa",
+  "settings.deleteAccountDescription":
+    "Elimina definitivamente il tuo account e tutta la tua cronologia di allenamento. Questa azione non può essere annullata.",
+  "settings.deleteAccount": "Elimina il mio account",
+  "settings.confirmDeleteAccount":
+    "Eliminare definitivamente il tuo account? Questa azione non può essere annullata: tutti i tuoi programmi, allenamenti e cronologia andranno persi.",
+  "settings.deleteAccountFailed": "Impossibile eliminare il tuo account",
 };

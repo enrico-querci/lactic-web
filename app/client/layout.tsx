@@ -12,6 +12,7 @@ import type { MessageKey } from "@/lib/i18n/messages/en";
 const NAV_ITEMS: { href: string; labelKey: MessageKey }[] = [
   { href: "/client/programs", labelKey: "nav.programs" },
   { href: "/client/history", labelKey: "nav.history" },
+  { href: "/client/settings", labelKey: "nav.settings" },
 ];
 
 // "/client" prefixes every other route, so startsWith would mark Home active
