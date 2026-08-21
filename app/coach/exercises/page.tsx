@@ -10,6 +10,9 @@ import {
 } from "@/lib/api/endpoints/exercises";
 import type { Exercise } from "@/lib/api/types";
 import { useAsync } from "@/lib/hooks/use-async";
+import { useLocale } from "@/lib/i18n/context";
+import { difficultyLabelKey } from "@/lib/constants/exercise-taxonomy-labels";
+import { displayMuscleGroup } from "@/lib/constants/muscle-groups";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -23,6 +26,7 @@ import {
 const PER_PAGE = 25;
 
 export default function ExercisesPage() {
+  const { t } = useLocale();
   const [filters, setFilters] = useState<FilterValues>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -59,7 +63,7 @@ export default function ExercisesPage() {
   };
 
   const handleDelete = async (exercise: Exercise) => {
-    if (!confirm(`Delete "${exercise.name}"?`)) return;
+    if (!confirm(t("exercises.confirmDelete", { name: exercise.name }))) return;
     await deleteExercise(exercise.id);
     setDeletedIds((prev) => [...prev, exercise.id]);
     if (selectedId === exercise.id) setSelectedId(null);
@@ -71,9 +75,9 @@ export default function ExercisesPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-900">Exercises</h1>
+        <h1 className="text-2xl font-bold text-zinc-900">{t("nav.exercises")}</h1>
         <Link href="/coach/exercises/new">
-          <Button>New Exercise</Button>
+          <Button>{t("exercises.newExercise")}</Button>
         </Link>
       </div>
 
@@ -83,7 +87,7 @@ export default function ExercisesPage() {
           page for this would be a regression, not a fix. */}
       {taxonomy.error && (
         <p className="mb-2 text-xs text-zinc-400">
-          Filters unavailable ({taxonomy.error})
+          {t("exercises.filtersUnavailable", { error: taxonomy.error })}
         </p>
       )}
 
@@ -95,7 +99,7 @@ export default function ExercisesPage() {
             onClick={list.reload}
             className="rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium hover:bg-red-50"
           >
-            Retry
+            {t("common.retry")}
           </button>
         </div>
       )}
@@ -105,7 +109,7 @@ export default function ExercisesPage() {
           {list.initial ? (
             <Loading />
           ) : exercises.length === 0 && !list.loading ? (
-            <EmptyState message="No exercises match these filters" />
+            <EmptyState message={t("exercises.noneMatch")} />
           ) : (
             <>
               {/* Previous results stay visible while the next page loads, so
@@ -119,11 +123,11 @@ export default function ExercisesPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                      <th className="px-6 py-3">Name</th>
-                      <th className="px-6 py-3">Muscle</th>
-                      <th className="px-6 py-3">Equipment</th>
-                      <th className="px-6 py-3">Type</th>
-                      <th className="px-6 py-3 text-right">Actions</th>
+                      <th className="px-6 py-3">{t("common.name")}</th>
+                      <th className="px-6 py-3">{t("exercises.tableMuscle")}</th>
+                      <th className="px-6 py-3">{t("exercises.tableEquipment")}</th>
+                      <th className="px-6 py-3">{t("exercises.tableType")}</th>
+                      <th className="px-6 py-3 text-right">{t("common.actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-200">
@@ -139,7 +143,7 @@ export default function ExercisesPage() {
                           {exercise.name}
                         </td>
                         <td className="px-6 py-3 text-sm text-zinc-500">
-                          {exercise.primary_muscle?.name ?? exercise.muscle_group}
+                          {displayMuscleGroup(exercise, t)}
                         </td>
                         <td className="px-6 py-3 text-sm text-zinc-500">
                           {exercise.equipment.map((e) => e.name).join(", ") || "—"}
@@ -147,11 +151,11 @@ export default function ExercisesPage() {
                         <td className="px-6 py-3 text-sm text-zinc-500">
                           {exercise.is_custom ? (
                             <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
-                              Custom
+                              {t("exercises.custom")}
                             </span>
                           ) : (
                             <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
-                              Catalog
+                              {t("exercises.catalog")}
                             </span>
                           )}
                         </td>
@@ -165,7 +169,7 @@ export default function ExercisesPage() {
                                 handleDelete(exercise);
                               }}
                             >
-                              Delete
+                              {t("common.delete")}
                             </Button>
                           )}
                         </td>
@@ -178,10 +182,14 @@ export default function ExercisesPage() {
               {meta && meta.totalPages > 1 && (
                 <nav
                   className="mt-4 flex items-center justify-between text-sm"
-                  aria-label="Pagination"
+                  aria-label={t("common.pagination")}
                 >
                   <span className="text-zinc-500">
-                    Page {meta.page} of {meta.totalPages} · {meta.totalCount} exercises
+                    {t("exercises.pageInfo", {
+                      page: meta.page,
+                      totalPages: meta.totalPages,
+                      totalCount: meta.totalCount,
+                    })}
                   </span>
                   <div className="flex gap-2">
                     <Button
@@ -190,7 +198,7 @@ export default function ExercisesPage() {
                       disabled={meta.page <= 1 || list.loading}
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                     >
-                      Previous
+                      {t("common.previous")}
                     </Button>
                     <Button
                       variant="secondary"
@@ -198,7 +206,7 @@ export default function ExercisesPage() {
                       disabled={meta.page >= meta.totalPages || list.loading}
                       onClick={() => setPage((p) => p + 1)}
                     >
-                      Next
+                      {t("common.next")}
                     </Button>
                   </div>
                 </nav>
@@ -210,7 +218,7 @@ export default function ExercisesPage() {
         <aside className="lg:sticky lg:top-6 lg:self-start">
           {selectedId === null ? (
             <div className="rounded-lg border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-400">
-              Select an exercise to preview it
+              {t("exercises.selectToPreview")}
             </div>
           ) : detail.initial || detail.loading ? (
             <Loading />
@@ -226,7 +234,7 @@ export default function ExercisesPage() {
                   costs one request against the provider's monthly quota. */}
               <ExerciseAnimation
                 animationUrl={detail.data.animation_url}
-                alt={`${detail.data.name} demonstration`}
+                alt={t("exercise.demonstrationAlt", { name: detail.data.name })}
               />
 
               {detail.data.description && (
@@ -236,13 +244,13 @@ export default function ExercisesPage() {
               <dl className="mt-3 space-y-1 text-sm">
                 {detail.data.primary_muscle && (
                   <div className="flex gap-2">
-                    <dt className="text-zinc-500">Primary</dt>
+                    <dt className="text-zinc-500">{t("exercises.primaryLabel")}</dt>
                     <dd className="text-zinc-900">{detail.data.primary_muscle.name}</dd>
                   </div>
                 )}
                 {detail.data.secondary_muscles.length > 0 && (
                   <div className="flex gap-2">
-                    <dt className="text-zinc-500">Secondary</dt>
+                    <dt className="text-zinc-500">{t("exercises.secondaryLabel")}</dt>
                     <dd className="text-zinc-900">
                       {detail.data.secondary_muscles.map((m) => m.name).join(", ")}
                     </dd>
@@ -250,7 +258,7 @@ export default function ExercisesPage() {
                 )}
                 {detail.data.equipment.length > 0 && (
                   <div className="flex gap-2">
-                    <dt className="text-zinc-500">Equipment</dt>
+                    <dt className="text-zinc-500">{t("exercises.tableEquipment")}</dt>
                     <dd className="text-zinc-900">
                       {detail.data.equipment.map((e) => e.name).join(", ")}
                     </dd>
@@ -258,8 +266,13 @@ export default function ExercisesPage() {
                 )}
                 {detail.data.difficulty && (
                   <div className="flex gap-2">
-                    <dt className="text-zinc-500">Level</dt>
-                    <dd className="text-zinc-900">{detail.data.difficulty}</dd>
+                    <dt className="text-zinc-500">{t("exercises.levelLabel")}</dt>
+                    <dd className="text-zinc-900">
+                      {(() => {
+                        const key = difficultyLabelKey(detail.data.difficulty);
+                        return key ? t(key) : detail.data.difficulty;
+                      })()}
+                    </dd>
                   </div>
                 )}
               </dl>

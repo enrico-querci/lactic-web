@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { getProgram, updateProgram } from "@/lib/api/endpoints/programs";
 import type { Program } from "@/lib/api/types";
 import { useAsync } from "@/lib/hooks/use-async";
+import { useLocale } from "@/lib/i18n/context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loading } from "@/components/ui/loading";
@@ -12,6 +13,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { ErrorBanner } from "@/components/ui/error-banner";
 
 export default function EditProgramPage() {
+  const { t } = useLocale();
   const params = useParams();
   const programId = Number(params.id);
 
@@ -21,8 +23,11 @@ export default function EditProgramPage() {
   );
 
   if (query.initial) return <Loading />;
-  if (query.error) return <ErrorState message={query.error} onRetry={query.reload} />;
-  if (!query.data) return <div>Program not found</div>;
+  if (query.error)
+    return (
+      <ErrorState message={query.error} onRetry={query.reload} retryLabel={t("common.retry")} />
+    );
+  if (!query.data) return <div>{t("program.notFound")}</div>;
 
   // A separate component rather than an effect seeding local state: this
   // only mounts once query.data actually exists, so useState(program.name)
@@ -40,6 +45,7 @@ function EditProgramForm({
   programId: number;
   program: Program;
 }) {
+  const { t } = useLocale();
   const router = useRouter();
   const [name, setName] = useState(program.name);
   const [description, setDescription] = useState(program.description || "");
@@ -55,22 +61,26 @@ function EditProgramForm({
       router.push(`/coach/programs/${programId}`);
     } catch (err) {
       setSaving(false);
-      setSubmitError(err instanceof Error ? err.message : "Could not save changes");
+      setSubmitError(err instanceof Error ? err.message : t("program.saveFailed"));
     }
   };
 
   return (
     <div className="mx-auto max-w-lg">
-      <h1 className="mb-6 text-2xl font-bold text-zinc-900">Edit Program</h1>
+      <h1 className="mb-6 text-2xl font-bold text-zinc-900">{t("program.editTitle")}</h1>
 
       {submitError && (
-        <ErrorBanner message={submitError} onDismiss={() => setSubmitError(null)} />
+        <ErrorBanner
+          message={submitError}
+          onDismiss={() => setSubmitError(null)}
+          dismissLabel={t("common.dismiss")}
+        />
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           id="name"
-          label="Name"
+          label={t("common.name")}
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -80,7 +90,7 @@ function EditProgramForm({
             htmlFor="description"
             className="mb-1 block text-sm font-medium text-zinc-700"
           >
-            Description
+            {t("common.description")}
           </label>
           <textarea
             id="description"
@@ -92,14 +102,14 @@ function EditProgramForm({
         </div>
         <div className="flex gap-3">
           <Button type="submit" disabled={saving || !name.trim()}>
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? t("common.saving") : t("common.saveChanges")}
           </Button>
           <Button
             type="button"
             variant="secondary"
             onClick={() => router.back()}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
         </div>
       </form>
