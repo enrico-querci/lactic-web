@@ -11,6 +11,7 @@ export const it: Record<MessageKey, string> = {
   "nav.exercises": "Esercizi",
   "nav.assignments": "Assegnazioni",
   "nav.templates": "Modelli",
+  "nav.openMenu": "Apri il menu",
 
   "login.subtitle": "Accedi per continuare",
   "login.googleFailed": "Accesso con Google non riuscito",

@@ -150,7 +150,7 @@ export default function ClientsPage() {
         {clients.length === 0 ? (
           <EmptyState message={t("clients.noneActive")} />
         ) : (
-          <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+          <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
@@ -202,13 +202,13 @@ export default function ClientsPage() {
         {invitations.length === 0 ? (
           <p className="text-sm text-zinc-500">{t("clients.noPendingInvitations")}</p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+          <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
                   <th className="px-6 py-3">{t("common.email")}</th>
                   <th className="px-6 py-3">{t("common.status")}</th>
-                  <th className="px-6 py-3">{t("clients.expires")}</th>
+                  <th className="hidden px-6 py-3 md:table-cell">{t("clients.expires")}</th>
                   <th className="px-6 py-3 text-right">{t("common.actions")}</th>
                 </tr>
               </thead>
@@ -229,7 +229,7 @@ export default function ClientsPage() {
                         {t(INVITATION_STATUS_KEY[invitation.status])}
                       </span>
                     </td>
-                    <td className="px-6 py-3 text-sm text-zinc-500">
+                    <td className="hidden px-6 py-3 text-sm text-zinc-500 md:table-cell">
                       {formatDateTime(invitation.expires_at, locale)}
                     </td>
                     <td className="px-6 py-3 text-right">

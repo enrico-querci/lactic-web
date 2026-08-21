@@ -121,13 +121,13 @@ export default function AssignmentsPage() {
       ) : assignments.length === 0 ? (
         <EmptyState message={t("assignments.noneFound")} />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
           <table className="w-full">
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
                 <th className="px-6 py-3">{t("assignments.tableProgram")}</th>
                 <th className="px-6 py-3">{t("assignments.tableClient")}</th>
-                <th className="px-6 py-3">{t("assignments.tableStartDate")}</th>
+                <th className="hidden px-6 py-3 md:table-cell">{t("assignments.tableStartDate")}</th>
                 <th className="px-6 py-3">{t("common.status")}</th>
                 <th className="px-6 py-3 text-right">{t("common.actions")}</th>
               </tr>
@@ -141,7 +141,7 @@ export default function AssignmentsPage() {
                   <td className="px-6 py-3 text-sm text-zinc-500">
                     {a.client.name}
                   </td>
-                  <td className="px-6 py-3 text-sm text-zinc-500">
+                  <td className="hidden px-6 py-3 text-sm text-zinc-500 md:table-cell">
                     {formatDate(a.start_date, locale)}
                   </td>
                   <td className="px-6 py-3">

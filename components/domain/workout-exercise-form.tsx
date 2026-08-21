@@ -53,7 +53,7 @@ export function WorkoutExerciseForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-500">
             {t("workoutForm.sets")}
@@ -104,7 +104,7 @@ export function WorkoutExerciseForm({
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-500">
             {t("workoutForm.suggestedWeight")}
