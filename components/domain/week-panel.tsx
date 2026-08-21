@@ -94,15 +94,22 @@ export function WeekPanel({
       )}
 
       {/* Below lg: this scrolls horizontally as a week strip rather than
-          crushing 7 columns into an unreadable width — at lg: and up the
-          natural column width (>=146px on a 1024px viewport) already clears
-          the min-w floor below, so the scrollbar never engages there. */}
+          crushing 7 columns into a width WorkoutCard's own name+actions
+          header can't render legibly (name and volume badges break
+          mid-word below ~150px of content room). The 220px floor must live
+          on the grid TRACK (minmax(220px,1fr)), not just the item — Tailwind's
+          plain grid-cols-7 tracks are minmax(0,1fr), which caps track growth
+          regardless of an item's own min-width, so items would overflow and
+          overlap their track instead of widening it. At lg: and up, revert to
+          plain grid-cols-7 (equal-fraction, no floor) — the natural columns
+          already worked fine pre-responsive-pass and a 220px floor would
+          force scrolling even on desktop. */}
       <div className="overflow-x-auto">
-        <div className="grid grid-cols-7 gap-px bg-zinc-200">
+        <div className="grid grid-cols-[repeat(7,minmax(220px,1fr))] gap-px bg-zinc-200 lg:grid-cols-7">
           {days.map((day) => {
             const dayWorkouts = week.workouts.filter((w) => w.day === day);
             return (
-              <div key={day} className="min-h-[120px] min-w-[110px] bg-zinc-50 p-2">
+              <div key={day} className="min-h-[120px] bg-zinc-50 p-2">
                 <p className="mb-2 text-center text-xs font-medium text-zinc-500">
                   {dayName(day, locale)}
                 </p>
