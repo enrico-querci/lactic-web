@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import {
   getExercise,
@@ -31,6 +31,21 @@ export default function ExercisesPage() {
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [deletedIds, setDeletedIds] = useState<number[]>([]);
+  const detailRef = useRef<HTMLElement>(null);
+
+  // Below lg: the detail panel renders under the (up to 25-row) table rather
+  // than beside it, so selecting a row would otherwise leave the coach to
+  // scroll manually to see what they just tapped. matchMedia rather than a
+  // fixed check, so this reflects the actual lg: breakpoint (1024px) once,
+  // not a hardcoded duplicate of the Tailwind value.
+  const selectExercise = (id: number) => {
+    setSelectedId(id);
+    if (typeof window !== "undefined" && !window.matchMedia("(min-width: 1024px)").matches) {
+      requestAnimationFrame(() => {
+        detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  };
 
   const taxonomy = useAsync(
     "taxonomy",
@@ -115,7 +130,7 @@ export default function ExercisesPage() {
               {/* Previous results stay visible while the next page loads, so
                   the list does not flash empty on every keystroke. */}
               <div
-                className={`overflow-hidden rounded-lg border border-zinc-200 bg-white transition-opacity ${
+                className={`overflow-x-auto rounded-lg border border-zinc-200 bg-white transition-opacity ${
                   list.loading ? "opacity-60" : ""
                 }`}
                 aria-busy={list.loading}
@@ -126,7 +141,7 @@ export default function ExercisesPage() {
                       <th className="px-6 py-3">{t("common.name")}</th>
                       <th className="px-6 py-3">{t("exercises.tableMuscle")}</th>
                       <th className="px-6 py-3">{t("exercises.tableEquipment")}</th>
-                      <th className="px-6 py-3">{t("exercises.tableType")}</th>
+                      <th className="hidden px-6 py-3 md:table-cell">{t("exercises.tableType")}</th>
                       <th className="px-6 py-3 text-right">{t("common.actions")}</th>
                     </tr>
                   </thead>
@@ -134,7 +149,7 @@ export default function ExercisesPage() {
                     {exercises.map((exercise) => (
                       <tr
                         key={exercise.id}
-                        onClick={() => setSelectedId(exercise.id)}
+                        onClick={() => selectExercise(exercise.id)}
                         className={`cursor-pointer hover:bg-zinc-50 ${
                           selectedId === exercise.id ? "bg-zinc-50" : ""
                         }`}
@@ -148,7 +163,7 @@ export default function ExercisesPage() {
                         <td className="px-6 py-3 text-sm text-zinc-500">
                           {exercise.equipment.map((e) => e.name).join(", ") || "—"}
                         </td>
-                        <td className="px-6 py-3 text-sm text-zinc-500">
+                        <td className="hidden px-6 py-3 text-sm text-zinc-500 md:table-cell">
                           {exercise.is_custom ? (
                             <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
                               {t("exercises.custom")}
@@ -215,7 +230,7 @@ export default function ExercisesPage() {
           )}
         </div>
 
-        <aside className="lg:sticky lg:top-6 lg:self-start">
+        <aside ref={detailRef} className="lg:sticky lg:top-6 lg:self-start">
           {selectedId === null ? (
             <div className="rounded-lg border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-400">
               {t("exercises.selectToPreview")}

@@ -59,12 +59,12 @@ export default function ProgramsPage() {
       {programs.length === 0 ? (
         <EmptyState message={t("program.noneYet")} />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
           <table className="w-full">
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
                 <th className="px-6 py-3">{t("common.name")}</th>
-                <th className="px-6 py-3">{t("common.description")}</th>
+                <th className="hidden px-6 py-3 md:table-cell">{t("common.description")}</th>
                 <th className="px-6 py-3">{t("common.created")}</th>
                 <th className="px-6 py-3 text-right">{t("common.actions")}</th>
               </tr>
@@ -80,7 +80,7 @@ export default function ProgramsPage() {
                       {program.name}
                     </Link>
                   </td>
-                  <td className="px-6 py-4 text-sm text-zinc-500">
+                  <td className="hidden px-6 py-4 text-sm text-zinc-500 md:table-cell">
                     {program.description || "—"}
                   </td>
                   <td className="px-6 py-4 text-sm text-zinc-500">

@@ -15,6 +15,7 @@ export const en = {
   "nav.exercises": "Exercises",
   "nav.assignments": "Assignments",
   "nav.templates": "Templates",
+  "nav.openMenu": "Open menu",
 
   "login.subtitle": "Sign in to continue",
   "login.googleFailed": "Google login failed",

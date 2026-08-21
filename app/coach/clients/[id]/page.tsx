@@ -43,7 +43,7 @@ export default function ClientDetailPage() {
       {sessions.length === 0 ? (
         <EmptyState message={t("clients.noSessions")} />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
           <table className="w-full">
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
