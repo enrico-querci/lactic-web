@@ -7,6 +7,10 @@ export const it: Record<MessageKey, string> = {
   "nav.programs": "Programmi",
   "nav.history": "Cronologia",
   "nav.logOut": "Esci",
+  "nav.clients": "Clienti",
+  "nav.exercises": "Esercizi",
+  "nav.assignments": "Assegnazioni",
+  "nav.templates": "Modelli",
 
   "login.subtitle": "Accedi per continuare",
   "login.googleFailed": "Accesso con Google non riuscito",
@@ -18,6 +22,12 @@ export const it: Record<MessageKey, string> = {
   "common.completed": "Completato",
   "common.inProgress": "In corso",
   "common.reps": "rip.",
+  "common.add": "Aggiungi",
+  "common.cancel": "Annulla",
+  "common.delete": "Elimina",
+  "common.duplicate": "Duplica",
+  "common.edit": "Modifica",
+  "common.working": "Attendere…",
 
   "home.resumeWorkout": "Riprendi l'allenamento",
   "home.currentProgram": "Programma attuale",
@@ -35,6 +45,17 @@ export const it: Record<MessageKey, string> = {
   "program.noWorkoutsThisWeek": "Nessun allenamento questa settimana",
   "program.status.active": "Attivo",
   "program.status.paused": "In pausa",
+  "program.actionFailed": "Azione non riuscita",
+  "program.addWeek": "+ Aggiungi settimana",
+  "program.noWeeksYet": "Nessuna settimana ancora. Aggiungi la prima per iniziare a costruire il programma.",
+  "program.confirmDeleteWorkout": "Eliminare questo allenamento?",
+
+  "weekPanel.addWorkout": "+ Allenamento",
+  "weekPanel.confirmDeleteWeek": "Eliminare questa settimana e tutti i suoi allenamenti?",
+  "weekPanel.workoutNamePlaceholder": "Nome allenamento",
+
+  "workoutCard.copy": "Copia",
+  "workoutCard.del": "Elim.",
 
   "workout.loadFailed": "Impossibile caricare questo allenamento",
   "workout.startFailed": "Impossibile avviare l'allenamento",

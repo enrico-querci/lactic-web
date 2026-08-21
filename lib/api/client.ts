@@ -1,4 +1,5 @@
 import type { PageMeta } from "@/lib/api/types";
+import { getStoredLocale } from "@/lib/i18n/context";
 
 const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1`;
 
@@ -103,8 +104,15 @@ async function rawRequest(path: string, options: RequestOptions): Promise<Respon
     url += `?${searchParams.toString()}`;
   }
 
+  // The API resolves locale from Accept-Language when it falls through the
+  // (currently always-empty) user.locale column — see Localizable in
+  // lactic-api. Without this, it reads the BROWSER's header instead of the
+  // app's own switcher, which is invisible until server content is actually
+  // locale-dependent, then diverges silently. No Vary header is needed:
+  // every request already carries Authorization and is uncacheable.
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "Accept-Language": getStoredLocale(),
   };
 
   if (accessToken) {

@@ -5,6 +5,7 @@ import type { WeekExtended } from "@/lib/api/types";
 import { WorkoutCard } from "@/components/domain/workout-card";
 import { Button } from "@/components/ui/button";
 import { dayName } from "@/lib/utils/format";
+import { useLocale } from "@/lib/i18n/context";
 
 interface WeekPanelProps {
   week: WeekExtended;
@@ -23,6 +24,7 @@ export function WeekPanel({
   onDuplicateWorkout,
   onDeleteWeek,
 }: WeekPanelProps) {
+  const { t, locale } = useLocale();
   const [showAddForm, setShowAddForm] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDay, setNewDay] = useState(1);
@@ -41,21 +43,21 @@ export function WeekPanel({
   return (
     <div className="rounded-lg border border-zinc-200 bg-white">
       <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
-        <h3 className="font-semibold text-zinc-900">Week {week.position}</h3>
+        <h3 className="font-semibold text-zinc-900">{t("program.week", { position: week.position })}</h3>
         <div className="flex gap-2">
           <Button size="sm" variant="secondary" onClick={() => setShowAddForm(!showAddForm)}>
-            + Workout
+            {t("weekPanel.addWorkout")}
           </Button>
           <Button
             size="sm"
             variant="danger"
             onClick={() => {
-              if (confirm("Delete this week and all its workouts?")) {
+              if (confirm(t("weekPanel.confirmDeleteWeek"))) {
                 onDeleteWeek(week.id);
               }
             }}
           >
-            Delete
+            {t("common.delete")}
           </Button>
         </div>
       </div>
@@ -67,7 +69,7 @@ export function WeekPanel({
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder="Workout name"
+              placeholder={t("weekPanel.workoutNamePlaceholder")}
               className="w-full rounded-md border border-zinc-300 px-3 py-1.5 text-sm"
             />
           </div>
@@ -78,15 +80,15 @@ export function WeekPanel({
           >
             {days.map((d) => (
               <option key={d} value={d}>
-                {dayName(d)}
+                {dayName(d, locale)}
               </option>
             ))}
           </select>
           <Button size="sm" onClick={handleAdd}>
-            Add
+            {t("common.add")}
           </Button>
           <Button size="sm" variant="secondary" onClick={() => setShowAddForm(false)}>
-            Cancel
+            {t("common.cancel")}
           </Button>
         </div>
       )}
@@ -97,7 +99,7 @@ export function WeekPanel({
           return (
             <div key={day} className="min-h-[120px] bg-zinc-50 p-2">
               <p className="mb-2 text-center text-xs font-medium text-zinc-500">
-                {dayName(day)}
+                {dayName(day, locale)}
               </p>
               <div className="space-y-2">
                 {dayWorkouts.map((workout) => (

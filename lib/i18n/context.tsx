@@ -21,6 +21,19 @@ function detectLocale(): Locale {
   return navigator.language.toLowerCase().startsWith("it") ? "it" : "en";
 }
 
+// Plain function, not a hook: lib/api/client.ts is a module, not a component,
+// and needs the current locale to set Accept-Language on every request. It
+// already reads localStorage directly for the refresh token, so this follows
+// the same shape. Reading localStorage rather than LocaleProvider's React
+// state also matters on the very first render, where that state is
+// deliberately still "en" for hydration safety while localStorage already
+// holds the real preference — so the first request out is correct too.
+export function getStoredLocale(): Locale {
+  if (typeof window === "undefined") return "en";
+  const stored = localStorage.getItem(STORAGE_KEY);
+  return stored === "it" || stored === "en" ? stored : detectLocale();
+}
+
 interface LocaleContextValue {
   locale: Locale;
   setLocale: (locale: Locale) => void;
@@ -37,8 +50,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const restore = () => {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      setLocaleState(stored === "it" || stored === "en" ? stored : detectLocale());
+      setLocaleState(getStoredLocale());
     };
     restore();
   }, []);

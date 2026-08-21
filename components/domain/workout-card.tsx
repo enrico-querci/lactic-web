@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import type { Workout } from "@/lib/api/types";
+import { useLocale } from "@/lib/i18n/context";
 
 interface WorkoutCardProps {
   workout: Workout;
@@ -16,6 +19,7 @@ export function WorkoutCard({
   onDelete,
   onDuplicate,
 }: WorkoutCardProps) {
+  const { t } = useLocale();
   const volumeEntries = Object.entries(workout.volume_sets);
 
   return (
@@ -31,16 +35,16 @@ export function WorkoutCard({
           <button
             onClick={() => onDuplicate(workout.id)}
             className="rounded p-1 text-xs text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
-            title="Duplicate"
+            title={t("common.duplicate")}
           >
-            Copy
+            {t("workoutCard.copy")}
           </button>
           <button
             onClick={() => onDelete(workout.id)}
             className="rounded p-1 text-xs text-red-400 hover:bg-red-50 hover:text-red-600"
-            title="Delete"
+            title={t("common.delete")}
           >
-            Del
+            {t("workoutCard.del")}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { ApiError } from "@/lib/api/client";
+import { useLocale } from "@/lib/i18n/context";
 
 export interface AsyncState<T> {
   data: T | null;
@@ -42,6 +43,17 @@ export interface AsyncState<T> {
  * instead of flashing an empty list on every keystroke.
  */
 export function useAsync<T>(key: string, fetcher: () => Promise<T>): AsyncState<T> {
+  // Scoped by locale so a language toggle refetches: the API can serve
+  // locale-dependent content (exercise names/descriptions today, taxonomy
+  // labels once wired), and this hook's own key/result comparison is what
+  // decides whether to show stale data or refetch — a bare `key` wouldn't
+  // change on a toggle, so old-language data would sit on screen until a
+  // hard reload. The redundant refetch this costs on endpoints with no
+  // locale-dependent content (most of them) is the right trade against
+  // auditing every one of this hook's call sites individually.
+  const { locale } = useLocale();
+  const scopedKey = `${locale}|${key}`;
+
   const [result, setResult] = useState<
     { key: string; attempt: number; data: T | null; error: string | null } | null
   >(null);
@@ -52,7 +64,7 @@ export function useAsync<T>(key: string, fetcher: () => Promise<T>): AsyncState<
 
     fetcher()
       .then((data) => {
-        if (!cancelled) setResult({ key, attempt, data, error: null });
+        if (!cancelled) setResult({ key: scopedKey, attempt, data, error: null });
       })
       .catch((e: unknown) => {
         if (cancelled) return;
@@ -70,27 +82,27 @@ export function useAsync<T>(key: string, fetcher: () => Promise<T>): AsyncState<
           Sentry.captureException(e);
         }
 
-        setResult({ key, attempt, data: null, error: message });
+        setResult({ key: scopedKey, attempt, data: null, error: message });
       });
 
     return () => {
       cancelled = true;
     };
     // `fetcher` is intentionally excluded: callers build it inline, so
-    // including it would refetch on every render. `key` is the contract.
+    // including it would refetch on every render. `scopedKey` is the contract.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, attempt]);
+  }, [scopedKey, attempt]);
 
   return {
     data: result?.data ?? null,
-    error: result?.key === key ? result?.error ?? null : null,
-    loading: result?.key !== key,
+    error: result?.key === scopedKey ? result?.error ?? null : null,
+    loading: result?.key !== scopedKey,
     initial: result === null,
-    pending: result === null || result.key !== key || result.attempt !== attempt,
+    pending: result === null || result.key !== scopedKey || result.attempt !== attempt,
     reload: () => setAttempt((n) => n + 1),
     mutate: (updater) =>
       setResult((prev) => ({
-        key,
+        key: scopedKey,
         attempt,
         data: updater(prev?.data ?? null),
         error: null,

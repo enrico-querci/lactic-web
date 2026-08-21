@@ -13,9 +13,11 @@ interface ErrorStateProps {
  * rather than leaving a refresh as the only recourse.
  *
  * retryLabel defaults to the English literal rather than reading useLocale()
- * internally: this component is shared with app/coach, which has no locale
- * switcher and must render identically regardless of the visitor's browser
- * language. Client call sites pass retryLabel={t("common.retry")} explicitly.
+ * internally: app/global-error.tsx renders this component outside
+ * LocaleProvider (it replaces the root layout, which is what mounts the
+ * provider), so an internal useLocale() call would throw inside the crash
+ * handler itself. Every other call site — coach included, since coach pages
+ * now use useLocale() too — passes retryLabel={t("common.retry")} explicitly.
  */
 export function ErrorState({ message, onRetry, retryLabel = "Try again" }: ErrorStateProps) {
   return (

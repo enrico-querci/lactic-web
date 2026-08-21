@@ -11,6 +11,10 @@ export const en = {
   "nav.programs": "Programs",
   "nav.history": "History",
   "nav.logOut": "Log out",
+  "nav.clients": "Clients",
+  "nav.exercises": "Exercises",
+  "nav.assignments": "Assignments",
+  "nav.templates": "Templates",
 
   "login.subtitle": "Sign in to continue",
   "login.googleFailed": "Google login failed",
@@ -24,6 +28,12 @@ export const en = {
   "common.completed": "Completed",
   "common.inProgress": "In progress",
   "common.reps": "reps",
+  "common.add": "Add",
+  "common.cancel": "Cancel",
+  "common.delete": "Delete",
+  "common.duplicate": "Duplicate",
+  "common.edit": "Edit",
+  "common.working": "Working…",
 
   "home.resumeWorkout": "Resume your workout",
   "home.currentProgram": "Current program",
@@ -41,6 +51,17 @@ export const en = {
   "program.noWorkoutsThisWeek": "No workouts this week",
   "program.status.active": "Active",
   "program.status.paused": "Paused",
+  "program.actionFailed": "That action failed",
+  "program.addWeek": "+ Add Week",
+  "program.noWeeksYet": "No weeks yet. Add your first week to start building.",
+  "program.confirmDeleteWorkout": "Delete this workout?",
+
+  "weekPanel.addWorkout": "+ Workout",
+  "weekPanel.confirmDeleteWeek": "Delete this week and all its workouts?",
+  "weekPanel.workoutNamePlaceholder": "Workout name",
+
+  "workoutCard.copy": "Copy",
+  "workoutCard.del": "Del",
 
   "workout.loadFailed": "Could not load this workout",
   "workout.startFailed": "Could not start the workout",
