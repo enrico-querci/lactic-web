@@ -4,6 +4,8 @@ import { useCallback, useState } from "react";
 import { getExercises, getExerciseTaxonomy } from "@/lib/api/endpoints/exercises";
 import type { Exercise } from "@/lib/api/types";
 import { useAsync } from "@/lib/hooks/use-async";
+import { useLocale } from "@/lib/i18n/context";
+import { displayMuscleGroup } from "@/lib/constants/muscle-groups";
 import {
   ExerciseFilters,
   EMPTY_FILTERS,
@@ -27,6 +29,7 @@ const PER_PAGE = 20;
  * request per row.
  */
 export function ExercisePicker({ onSelect, onCancel }: ExercisePickerProps) {
+  const { t } = useLocale();
   const [filters, setFilters] = useState<FilterValues>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
 
@@ -68,14 +71,14 @@ export function ExercisePicker({ onSelect, onCancel }: ExercisePickerProps) {
           onClick={onCancel}
           className="rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-500 hover:bg-zinc-50"
         >
-          Cancel
+          {t("common.cancel")}
         </button>
       </div>
       {/* Non-blocking: taxonomy only feeds the filter dropdowns above, so a
           failure here degrades filtering, not the exercise list below. */}
       {taxonomy.error && (
         <p className="mt-1 text-xs text-zinc-400">
-          Filters unavailable ({taxonomy.error})
+          {t("exercises.filtersUnavailable", { error: taxonomy.error })}
         </p>
       )}
 
@@ -83,7 +86,7 @@ export function ExercisePicker({ onSelect, onCancel }: ExercisePickerProps) {
         <div className="mb-2 flex items-center justify-between rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           <span>{list.error}</span>
           <button type="button" onClick={list.reload} className="text-xs font-medium underline">
-            Retry
+            {t("common.retry")}
           </button>
         </div>
       )}
@@ -93,9 +96,9 @@ export function ExercisePicker({ onSelect, onCancel }: ExercisePickerProps) {
         aria-busy={list.loading}
       >
         {list.initial ? (
-          <p className="p-4 text-center text-sm text-zinc-400">Loading…</p>
+          <p className="p-4 text-center text-sm text-zinc-400">{t("common.loading")}</p>
         ) : exercises.length === 0 && !list.loading ? (
-          <p className="p-4 text-center text-sm text-zinc-400">No exercises found</p>
+          <p className="p-4 text-center text-sm text-zinc-400">{t("exercisePicker.noneFound")}</p>
         ) : (
           exercises.map((exercise) => (
             <button
@@ -107,12 +110,12 @@ export function ExercisePicker({ onSelect, onCancel }: ExercisePickerProps) {
                 {exercise.name}
                 {exercise.is_custom && (
                   <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
-                    Custom
+                    {t("exercises.custom")}
                   </span>
                 )}
               </span>
               <span className="text-xs text-zinc-400">
-                {exercise.primary_muscle?.name ?? exercise.muscle_group}
+                {displayMuscleGroup(exercise, t)}
               </span>
             </button>
           ))
@@ -122,7 +125,11 @@ export function ExercisePicker({ onSelect, onCancel }: ExercisePickerProps) {
       {meta && meta.totalPages > 1 && (
         <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
           <span>
-            Page {meta.page} of {meta.totalPages} · {meta.totalCount} exercises
+            {t("exercises.pageInfo", {
+              page: meta.page,
+              totalPages: meta.totalPages,
+              totalCount: meta.totalCount,
+            })}
           </span>
           <div className="flex gap-2">
             <button
@@ -131,7 +138,7 @@ export function ExercisePicker({ onSelect, onCancel }: ExercisePickerProps) {
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               className="rounded-md border border-zinc-300 px-2 py-1 disabled:opacity-40"
             >
-              Previous
+              {t("common.previous")}
             </button>
             <button
               type="button"
@@ -139,7 +146,7 @@ export function ExercisePicker({ onSelect, onCancel }: ExercisePickerProps) {
               onClick={() => setPage((p) => p + 1)}
               className="rounded-md border border-zinc-300 px-2 py-1 disabled:opacity-40"
             >
-              Next
+              {t("common.next")}
             </button>
           </div>
         </div>

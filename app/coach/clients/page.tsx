@@ -12,13 +12,23 @@ import {
 } from "@/lib/api/endpoints/clients";
 import type { ClientInvitation, User } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/utils/format";
+import { useLocale } from "@/lib/i18n/context";
+import type { MessageKey } from "@/lib/i18n/messages/en";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Loading } from "@/components/ui/loading";
 import { Modal } from "@/components/ui/modal";
 
+const INVITATION_STATUS_KEY: Record<ClientInvitation["status"], MessageKey> = {
+  pending: "invite.status.pending",
+  expired: "invite.status.expired",
+  accepted: "invite.status.accepted",
+  revoked: "invite.status.revoked",
+};
+
 export default function ClientsPage() {
+  const { t, locale } = useLocale();
   const [clients, setClients] = useState<User[]>([]);
   const [invitations, setInvitations] = useState<ClientInvitation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,10 +46,10 @@ export default function ClientsPage() {
         setInvitations(invitationData);
       })
       .catch((err) =>
-        setError(err instanceof Error ? err.message : "Could not load clients")
+        setError(err instanceof Error ? err.message : t("clients.loadFailed"))
       )
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   const handleInvite = async (event: FormEvent) => {
     event.preventDefault();
@@ -55,23 +65,23 @@ export default function ClientsPage() {
       ]);
       setEmail("");
       setInviteOpen(false);
-      setNotice(`Invitation sent to ${invitation.email}.`);
+      setNotice(t("clients.invitationSent", { email: invitation.email }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not send invitation");
+      setError(err instanceof Error ? err.message : t("clients.inviteFailed"));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleRemove = async (client: User) => {
-    if (!confirm(`Remove ${client.name} from your clients?`)) return;
+    if (!confirm(t("clients.confirmRemove", { name: client.name }))) return;
 
     setError(null);
     try {
       await removeClient(client.id);
       setClients((current) => current.filter((item) => item.id !== client.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not remove client");
+      setError(err instanceof Error ? err.message : t("clients.removeFailed"));
     }
   };
 
@@ -85,16 +95,16 @@ export default function ClientsPage() {
       setInvitations((current) =>
         current.map((item) => (item.id === updated.id ? updated : item))
       );
-      setNotice(`Invitation resent to ${updated.email}.`);
+      setNotice(t("clients.invitationResent", { email: updated.email }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not resend invitation");
+      setError(err instanceof Error ? err.message : t("clients.resendFailed"));
     } finally {
       setBusyId(null);
     }
   };
 
   const handleRevoke = async (invitation: ClientInvitation) => {
-    if (!confirm(`Revoke the invitation for ${invitation.email}?`)) return;
+    if (!confirm(t("clients.confirmRevoke", { email: invitation.email }))) return;
 
     setBusyId(invitation.id);
     setError(null);
@@ -104,7 +114,7 @@ export default function ClientsPage() {
         current.filter((item) => item.id !== invitation.id)
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not revoke invitation");
+      setError(err instanceof Error ? err.message : t("clients.revokeFailed"));
     } finally {
       setBusyId(null);
     }
@@ -116,12 +126,10 @@ export default function ClientsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Clients</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Invite clients and manage the people training with you.
-          </p>
+          <h1 className="text-2xl font-bold text-zinc-900">{t("nav.clients")}</h1>
+          <p className="mt-1 text-sm text-zinc-500">{t("clients.subtitle")}</p>
         </div>
-        <Button onClick={() => setInviteOpen(true)}>Invite client</Button>
+        <Button onClick={() => setInviteOpen(true)}>{t("clients.inviteButton")}</Button>
       </div>
 
       {error && (
@@ -137,18 +145,18 @@ export default function ClientsPage() {
 
       <section>
         <h2 className="mb-3 text-lg font-semibold text-zinc-900">
-          Active clients
+          {t("clients.active")}
         </h2>
         {clients.length === 0 ? (
-          <EmptyState message="No active clients yet" />
+          <EmptyState message={t("clients.noneActive")} />
         ) : (
           <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  <th className="px-6 py-3">Name</th>
-                  <th className="px-6 py-3">Email</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
+                  <th className="px-6 py-3">{t("common.name")}</th>
+                  <th className="px-6 py-3">{t("common.email")}</th>
+                  <th className="px-6 py-3 text-right">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200">
@@ -168,7 +176,7 @@ export default function ClientsPage() {
                     <td className="px-6 py-3 text-right">
                       <Link href={`/coach/clients/${client.id}`}>
                         <Button variant="secondary" size="sm" className="mr-2">
-                          Progress
+                          {t("clients.progress")}
                         </Button>
                       </Link>
                       <Button
@@ -176,7 +184,7 @@ export default function ClientsPage() {
                         size="sm"
                         onClick={() => handleRemove(client)}
                       >
-                        Remove
+                        {t("common.remove")}
                       </Button>
                     </td>
                   </tr>
@@ -189,19 +197,19 @@ export default function ClientsPage() {
 
       <section className="mt-8">
         <h2 className="mb-3 text-lg font-semibold text-zinc-900">
-          Pending invitations
+          {t("clients.pendingInvitations")}
         </h2>
         {invitations.length === 0 ? (
-          <p className="text-sm text-zinc-500">No pending invitations.</p>
+          <p className="text-sm text-zinc-500">{t("clients.noPendingInvitations")}</p>
         ) : (
           <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  <th className="px-6 py-3">Email</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3">Expires</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
+                  <th className="px-6 py-3">{t("common.email")}</th>
+                  <th className="px-6 py-3">{t("common.status")}</th>
+                  <th className="px-6 py-3">{t("clients.expires")}</th>
+                  <th className="px-6 py-3 text-right">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200">
@@ -218,11 +226,11 @@ export default function ClientsPage() {
                             : "bg-blue-50 text-blue-700"
                         }`}
                       >
-                        {invitation.status}
+                        {t(INVITATION_STATUS_KEY[invitation.status])}
                       </span>
                     </td>
                     <td className="px-6 py-3 text-sm text-zinc-500">
-                      {formatDateTime(invitation.expires_at)}
+                      {formatDateTime(invitation.expires_at, locale)}
                     </td>
                     <td className="px-6 py-3 text-right">
                       <Button
@@ -232,7 +240,7 @@ export default function ClientsPage() {
                         disabled={busyId === invitation.id}
                         onClick={() => handleResend(invitation)}
                       >
-                        Resend
+                        {t("clients.resend")}
                       </Button>
                       <Button
                         variant="danger"
@@ -240,7 +248,7 @@ export default function ClientsPage() {
                         disabled={busyId === invitation.id}
                         onClick={() => handleRevoke(invitation)}
                       >
-                        Revoke
+                        {t("clients.revoke")}
                       </Button>
                     </td>
                   </tr>
@@ -254,13 +262,10 @@ export default function ClientsPage() {
       <Modal
         open={inviteOpen}
         onClose={() => !submitting && setInviteOpen(false)}
-        title="Invite a client"
+        title={t("clients.inviteModalTitle")}
       >
         <form onSubmit={handleInvite}>
-          <p className="mb-4 text-sm text-zinc-500">
-            They will receive a secure link and must sign in with this email
-            address to join your client list.
-          </p>
+          <p className="mb-4 text-sm text-zinc-500">{t("clients.inviteModalBody")}</p>
           {error && (
             <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
               {error}
@@ -268,7 +273,7 @@ export default function ClientsPage() {
           )}
           <Input
             id="client-email"
-            label="Email address"
+            label={t("clients.emailAddressLabel")}
             type="email"
             autoComplete="email"
             required
@@ -284,10 +289,10 @@ export default function ClientsPage() {
               disabled={submitting}
               onClick={() => setInviteOpen(false)}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Sending…" : "Send invitation"}
+              {submitting ? t("clients.sending") : t("clients.sendInvitation")}
             </Button>
           </div>
         </form>

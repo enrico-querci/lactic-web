@@ -10,6 +10,8 @@ import {
 } from "@/lib/api/endpoints/workout-exercises";
 import type { Exercise } from "@/lib/api/types";
 import { useAsync } from "@/lib/hooks/use-async";
+import { useLocale } from "@/lib/i18n/context";
+import { displayMuscleGroup } from "@/lib/constants/muscle-groups";
 import { ExercisePicker } from "@/components/domain/exercise-picker";
 import { WorkoutExerciseForm } from "@/components/domain/workout-exercise-form";
 import { Button } from "@/components/ui/button";
@@ -18,6 +20,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { ErrorBanner } from "@/components/ui/error-banner";
 
 export default function WorkoutDetailPage() {
+  const { t } = useLocale();
   const params = useParams();
   const router = useRouter();
   const programId = Number(params.id);
@@ -45,7 +48,7 @@ export default function WorkoutDetailPage() {
     try {
       await fn();
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : "That action failed");
+      setActionError(e instanceof Error ? e.message : t("program.actionFailed"));
     } finally {
       setMutating(false);
     }
@@ -98,7 +101,7 @@ export default function WorkoutDetailPage() {
     });
 
   const handleDeleteExercise = (exerciseId: number) => {
-    if (!confirm("Remove this exercise?")) return;
+    if (!confirm(t("workoutDetail.confirmRemoveExercise"))) return;
     return runMutation(async () => {
       await deleteWorkoutExercise(workoutId, exerciseId);
       query.mutate((w) => ({
@@ -109,8 +112,11 @@ export default function WorkoutDetailPage() {
   };
 
   if (query.initial) return <Loading />;
-  if (query.error) return <ErrorState message={query.error} onRetry={query.reload} />;
-  if (!workout) return <div>Workout not found</div>;
+  if (query.error)
+    return (
+      <ErrorState message={query.error} onRetry={query.reload} retryLabel={t("common.retry")} />
+    );
+  if (!workout) return <div>{t("workout.notFound")}</div>;
 
   return (
     <div>
@@ -119,7 +125,7 @@ export default function WorkoutDetailPage() {
           onClick={() => router.push(`/coach/programs/${programId}`)}
           className="mb-2 text-sm text-zinc-500 hover:text-zinc-700"
         >
-          &larr; Back to program
+          &larr; {t("workoutDetail.backToProgram")}
         </button>
         <h1 className="text-2xl font-bold text-zinc-900">{workout.name}</h1>
         {Object.keys(workout.volume_sets).length > 0 && (
@@ -137,7 +143,11 @@ export default function WorkoutDetailPage() {
       </div>
 
       {actionError && (
-        <ErrorBanner message={actionError} onDismiss={() => setActionError(null)} />
+        <ErrorBanner
+          message={actionError}
+          onDismiss={() => setActionError(null)}
+          dismissLabel={t("common.dismiss")}
+        />
       )}
 
       <div className={`space-y-3 transition-opacity ${mutating ? "opacity-60" : ""}`}>
@@ -157,7 +167,7 @@ export default function WorkoutDetailPage() {
                     {we.exercise.name}
                   </span>
                   <span className="ml-2 text-xs text-zinc-400">
-                    {we.exercise.muscle_group}
+                    {displayMuscleGroup(we.exercise, t)}
                   </span>
                 </div>
                 <div className="flex gap-2">
@@ -168,14 +178,14 @@ export default function WorkoutDetailPage() {
                     disabled={mutating}
                     className="text-xs text-zinc-500 hover:text-zinc-700 disabled:opacity-50"
                   >
-                    {editingId === we.id ? "Close" : "Edit"}
+                    {editingId === we.id ? t("common.close") : t("common.edit")}
                   </button>
                   <button
                     onClick={() => handleDeleteExercise(we.id)}
                     disabled={mutating}
                     className="text-xs text-red-400 hover:text-red-600 disabled:opacity-50"
                   >
-                    Remove
+                    {t("common.remove")}
                   </button>
                 </div>
               </div>
@@ -192,7 +202,7 @@ export default function WorkoutDetailPage() {
                   <span>
                     {we.sets} x {we.reps}
                   </span>
-                  <span>Rest {we.rest_seconds}s</span>
+                  <span>{t("workout.restSeconds", { seconds: we.rest_seconds })}</span>
                   {we.rir != null && <span>RIR {we.rir}</span>}
                   {we.weight != null && <span>{we.weight}kg</span>}
                   {we.notes && (
@@ -212,7 +222,7 @@ export default function WorkoutDetailPage() {
           />
         ) : (
           <Button variant="secondary" onClick={() => setShowPicker(true)}>
-            + Add Exercise
+            {t("workoutDetail.addExercise")}
           </Button>
         )}
       </div>

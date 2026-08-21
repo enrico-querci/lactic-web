@@ -6,12 +6,14 @@ import { getPrograms } from "@/lib/api/endpoints/programs";
 import { getClients } from "@/lib/api/endpoints/clients";
 import { createProgramAssignment } from "@/lib/api/endpoints/program-assignments";
 import { useAsync } from "@/lib/hooks/use-async";
+import { useLocale } from "@/lib/i18n/context";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/ui/loading";
 import { ErrorState } from "@/components/ui/error-state";
 import { ErrorBanner } from "@/components/ui/error-banner";
 
 export default function NewAssignmentPage() {
+  const { t } = useLocale();
   const router = useRouter();
   const query = useAsync(
     "assignment-form-data",
@@ -41,28 +43,35 @@ export default function NewAssignmentPage() {
     } catch (err) {
       setSaving(false);
       setSubmitError(
-        err instanceof Error ? err.message : "Could not create this assignment"
+        err instanceof Error ? err.message : t("assignments.createFailed")
       );
     }
   };
 
   if (query.initial) return <Loading />;
-  if (query.error) return <ErrorState message={query.error} onRetry={query.reload} />;
+  if (query.error)
+    return (
+      <ErrorState message={query.error} onRetry={query.reload} retryLabel={t("common.retry")} />
+    );
 
   return (
     <div className="mx-auto max-w-lg">
       <h1 className="mb-6 text-2xl font-bold text-zinc-900">
-        New Assignment
+        {t("assignments.newAssignment")}
       </h1>
 
       {submitError && (
-        <ErrorBanner message={submitError} onDismiss={() => setSubmitError(null)} />
+        <ErrorBanner
+          message={submitError}
+          onDismiss={() => setSubmitError(null)}
+          dismissLabel={t("common.dismiss")}
+        />
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-zinc-700">
-            Program
+            {t("assignments.tableProgram")}
           </label>
           <select
             value={programId}
@@ -70,7 +79,7 @@ export default function NewAssignmentPage() {
             required
             className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
           >
-            <option value="">Select a program...</option>
+            <option value="">{t("assignments.selectProgram")}</option>
             {programs.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -81,7 +90,7 @@ export default function NewAssignmentPage() {
 
         <div>
           <label className="mb-1 block text-sm font-medium text-zinc-700">
-            Client
+            {t("assignments.tableClient")}
           </label>
           <select
             value={clientId}
@@ -89,7 +98,7 @@ export default function NewAssignmentPage() {
             required
             className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
           >
-            <option value="">Select a client...</option>
+            <option value="">{t("assignments.selectClient")}</option>
             {clients.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name} ({c.email})
@@ -100,7 +109,7 @@ export default function NewAssignmentPage() {
 
         <div>
           <label className="mb-1 block text-sm font-medium text-zinc-700">
-            Start Date
+            {t("assignments.tableStartDate")}
           </label>
           <input
             type="date"
@@ -113,14 +122,14 @@ export default function NewAssignmentPage() {
 
         <div>
           <label className="mb-1 block text-sm font-medium text-zinc-700">
-            Notes (optional)
+            {t("assignments.notesOptionalLabel")}
           </label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
             className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-            placeholder="Notes for the client"
+            placeholder={t("assignments.notesPlaceholder")}
           />
         </div>
 
@@ -129,14 +138,14 @@ export default function NewAssignmentPage() {
             type="submit"
             disabled={saving || !programId || !clientId || !startDate}
           >
-            {saving ? "Creating..." : "Create Assignment"}
+            {saving ? t("common.creating") : t("assignments.createAssignment")}
           </Button>
           <Button
             type="button"
             variant="secondary"
             onClick={() => router.back()}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
         </div>
       </form>

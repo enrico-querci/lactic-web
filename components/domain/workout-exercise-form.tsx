@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { WorkoutExercise } from "@/lib/api/types";
+import { useLocale } from "@/lib/i18n/context";
 import { Button } from "@/components/ui/button";
 
 interface WorkoutExerciseFormProps {
@@ -25,6 +26,7 @@ export function WorkoutExerciseForm({
   onSave,
   onCancel,
 }: WorkoutExerciseFormProps) {
+  const { t } = useLocale();
   const [sets, setSets] = useState(initial?.sets ?? 3);
   const [reps, setReps] = useState(initial?.reps ?? 10);
   const [restSeconds, setRestSeconds] = useState(initial?.rest_seconds ?? 90);
@@ -54,7 +56,7 @@ export function WorkoutExerciseForm({
       <div className="grid grid-cols-4 gap-3">
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-500">
-            Sets
+            {t("workoutForm.sets")}
           </label>
           <input
             type="number"
@@ -66,7 +68,7 @@ export function WorkoutExerciseForm({
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-500">
-            Reps
+            {t("workoutForm.reps")}
           </label>
           <input
             type="number"
@@ -78,7 +80,7 @@ export function WorkoutExerciseForm({
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-500">
-            Rest (s)
+            {t("workoutForm.restLabel")}
           </label>
           <input
             type="number"
@@ -105,7 +107,7 @@ export function WorkoutExerciseForm({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-500">
-            Suggested Weight (kg)
+            {t("workoutForm.suggestedWeight")}
           </label>
           <input
             type="number"
@@ -119,23 +121,23 @@ export function WorkoutExerciseForm({
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-500">
-            Notes
+            {t("common.notes")}
           </label>
           <input
             type="text"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Coach notes"
+            placeholder={t("workoutForm.notesPlaceholder")}
             className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
           />
         </div>
       </div>
       <div className="flex gap-2">
         <Button type="submit" size="sm">
-          Save
+          {t("common.save")}
         </Button>
         <Button type="button" size="sm" variant="secondary" onClick={onCancel}>
-          Cancel
+          {t("common.cancel")}
         </Button>
       </div>
     </form>
