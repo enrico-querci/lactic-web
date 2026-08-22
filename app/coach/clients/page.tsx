@@ -10,6 +10,7 @@ import {
   resendClientInvitation,
   revokeClientInvitation,
 } from "@/lib/api/endpoints/clients";
+import { ApiError } from "@/lib/api/client";
 import type { ClientInvitation, User } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/utils/format";
 import { useLocale } from "@/lib/i18n/context";
@@ -37,7 +38,15 @@ export default function ClientsPage() {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // Shared by every action below, so a 402 from any of them shows the
+  // upgrade CTA and any other error clears it.
+  const reportError = (err: unknown, fallback: string) => {
+    setLimitReached(err instanceof ApiError && err.status === 402);
+    setError(err instanceof Error ? err.message : fallback);
+  };
 
   useEffect(() => {
     Promise.all([getClients(), getClientInvitations()])
@@ -55,6 +64,7 @@ export default function ClientsPage() {
     event.preventDefault();
     setSubmitting(true);
     setError(null);
+    setLimitReached(false);
     setNotice(null);
 
     try {
@@ -67,7 +77,7 @@ export default function ClientsPage() {
       setInviteOpen(false);
       setNotice(t("clients.invitationSent", { email: invitation.email }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("clients.inviteFailed"));
+      reportError(err, t("clients.inviteFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -77,17 +87,19 @@ export default function ClientsPage() {
     if (!confirm(t("clients.confirmRemove", { name: client.name }))) return;
 
     setError(null);
+    setLimitReached(false);
     try {
       await removeClient(client.id);
       setClients((current) => current.filter((item) => item.id !== client.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("clients.removeFailed"));
+      reportError(err, t("clients.removeFailed"));
     }
   };
 
   const handleResend = async (invitation: ClientInvitation) => {
     setBusyId(invitation.id);
     setError(null);
+    setLimitReached(false);
     setNotice(null);
 
     try {
@@ -97,7 +109,7 @@ export default function ClientsPage() {
       );
       setNotice(t("clients.invitationResent", { email: updated.email }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("clients.resendFailed"));
+      reportError(err, t("clients.resendFailed"));
     } finally {
       setBusyId(null);
     }
@@ -108,13 +120,14 @@ export default function ClientsPage() {
 
     setBusyId(invitation.id);
     setError(null);
+    setLimitReached(false);
     try {
       await revokeClientInvitation(invitation.id);
       setInvitations((current) =>
         current.filter((item) => item.id !== invitation.id)
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("clients.revokeFailed"));
+      reportError(err, t("clients.revokeFailed"));
     } finally {
       setBusyId(null);
     }
@@ -133,8 +146,13 @@ export default function ClientsPage() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
-          {error}
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-md bg-red-50 p-3 text-sm text-red-700">
+          <span>{error}</span>
+          {limitReached && (
+            <Link href="/coach/billing" className="shrink-0 font-medium underline">
+              {t("billing.upgrade")}
+            </Link>
+          )}
         </div>
       )}
       {notice && (
@@ -267,8 +285,13 @@ export default function ClientsPage() {
         <form onSubmit={handleInvite}>
           <p className="mb-4 text-sm text-zinc-500">{t("clients.inviteModalBody")}</p>
           {error && (
-            <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
-              {error}
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-md bg-red-50 p-3 text-sm text-red-700">
+              <span>{error}</span>
+              {limitReached && (
+                <Link href="/coach/billing" className="shrink-0 font-medium underline">
+                  {t("billing.upgrade")}
+                </Link>
+              )}
             </div>
           )}
           <Input

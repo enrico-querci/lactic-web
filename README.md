@@ -7,6 +7,7 @@ Set the backend and Google client configuration in `.env.local`:
 ```text
 NEXT_PUBLIC_API_URL=http://localhost:3000
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=...
+NEXT_PUBLIC_REVENUECAT_WEB_BILLING_KEY=rcb_...
 ```
 
 `NEXT_PUBLIC_SENTRY_DSN` is optional — error tracking is inert without it,
@@ -14,6 +15,12 @@ which is how local development runs. In Vercel, `SENTRY_ORG`,
 `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` (none `NEXT_PUBLIC_`) are also
 needed, but only for build-time source map upload; the Sentry Vercel
 marketplace integration provisions all four automatically when connected.
+
+`NEXT_PUBLIC_REVENUECAT_WEB_BILLING_KEY` is RevenueCat's **public** Web
+Billing API key (safe to expose client-side — it's what `lib/billing/
+revenuecat.ts` passes to `Purchases.configure`). It is a different key from
+the backend's `REVENUECAT_SECRET_API_KEY` (see `lactic-api`'s README),
+which must stay server-side only.
 
 First, run the development server:
 

@@ -16,6 +16,7 @@ const NAV_ITEMS: { href: string; labelKey: MessageKey }[] = [
   { href: "/coach/exercises", labelKey: "nav.exercises" },
   { href: "/coach/assignments", labelKey: "nav.assignments" },
   { href: "/coach/templates", labelKey: "nav.templates" },
+  { href: "/coach/billing", labelKey: "nav.billing" },
 ];
 
 export default function CoachLayout({ children }: { children: ReactNode }) {
