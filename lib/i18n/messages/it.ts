@@ -13,6 +13,7 @@ export const it: Record<MessageKey, string> = {
   "nav.templates": "Modelli",
   "nav.openMenu": "Apri il menu",
   "nav.settings": "Impostazioni",
+  "nav.billing": "Fatturazione",
 
   "login.subtitle": "Accedi per continuare",
   "login.googleFailed": "Accesso con Google non riuscito",
@@ -297,4 +298,25 @@ export const it: Record<MessageKey, string> = {
   "settings.confirmDeleteAccount":
     "Eliminare definitivamente il tuo account? Questa azione non può essere annullata: tutti i tuoi programmi, allenamenti e cronologia andranno persi.",
   "settings.deleteAccountFailed": "Impossibile eliminare il tuo account",
+
+  "billing.title": "Fatturazione",
+  "billing.currentPlan": "Piano attuale",
+  "billing.plan.free": "Gratuito",
+  "billing.plan.pro": "Pro",
+  "billing.plan.pro_plus": "Pro+",
+  "billing.plan.unlimited": "Illimitato",
+  "billing.plan.founding": "Founding",
+  "billing.usage": "{used} di {limit} clienti",
+  "billing.usageUnlimited": "{used} clienti · illimitati",
+  "billing.expiresOn": "Si rinnova il {date}",
+  "billing.billingIssue": "C'è un problema con il tuo ultimo pagamento. Aggiorna il metodo di pagamento per mantenere il tuo piano.",
+  "billing.manageSubscription": "Gestisci abbonamento",
+  "billing.choosePlan": "Scegli un piano",
+  "billing.subscribe": "Abbonati",
+  "billing.subscribing": "Apertura del pagamento…",
+  "billing.purchaseFailed": "Non è stato possibile completare l'acquisto",
+  "billing.loadOfferingsFailed": "Impossibile caricare i piani",
+  "billing.notConfigured": "La fatturazione non è al momento disponibile",
+  "billing.clientLimitReached": "Hai raggiunto il limite di clienti del tuo piano",
+  "billing.upgrade": "Passa a un piano superiore",
 };

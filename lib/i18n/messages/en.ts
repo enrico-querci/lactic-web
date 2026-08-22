@@ -17,6 +17,7 @@ export const en = {
   "nav.templates": "Templates",
   "nav.openMenu": "Open menu",
   "nav.settings": "Settings",
+  "nav.billing": "Billing",
 
   "login.subtitle": "Sign in to continue",
   "login.googleFailed": "Google login failed",
@@ -310,6 +311,27 @@ export const en = {
   "settings.confirmDeleteAccount":
     "Permanently delete your account? This cannot be undone — all your programs, workouts, and history will be lost.",
   "settings.deleteAccountFailed": "Could not delete your account",
+
+  "billing.title": "Billing",
+  "billing.currentPlan": "Current plan",
+  "billing.plan.free": "Free",
+  "billing.plan.pro": "Pro",
+  "billing.plan.pro_plus": "Pro+",
+  "billing.plan.unlimited": "Unlimited",
+  "billing.plan.founding": "Founding",
+  "billing.usage": "{used} of {limit} clients",
+  "billing.usageUnlimited": "{used} clients · unlimited",
+  "billing.expiresOn": "Renews {date}",
+  "billing.billingIssue": "There's a problem with your last payment. Update your payment method to keep your plan.",
+  "billing.manageSubscription": "Manage subscription",
+  "billing.choosePlan": "Choose a plan",
+  "billing.subscribe": "Subscribe",
+  "billing.subscribing": "Opening checkout…",
+  "billing.purchaseFailed": "The purchase could not be completed",
+  "billing.loadOfferingsFailed": "Could not load plans",
+  "billing.notConfigured": "Billing is not available right now",
+  "billing.clientLimitReached": "You've reached your plan's client limit",
+  "billing.upgrade": "Upgrade",
 } as const;
 
 export type MessageKey = keyof typeof en;

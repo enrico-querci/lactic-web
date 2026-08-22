@@ -19,6 +19,15 @@ export interface RefreshResponse {
   refresh_token: string;
 }
 
+export interface Subscription {
+  plan: "free" | "pro" | "pro_plus" | "unlimited" | "founding";
+  client_limit: number | null;
+  client_slots_used: number;
+  expires_at: string | null;
+  auto_renew: boolean | null;
+  billing_issue: boolean;
+}
+
 export interface ClientInvitation {
   id: number;
   email: string;
