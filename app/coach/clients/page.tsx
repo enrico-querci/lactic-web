@@ -172,15 +172,15 @@ export default function ClientsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  <th className="px-6 py-3">{t("common.name")}</th>
-                  <th className="px-6 py-3">{t("common.email")}</th>
-                  <th className="px-6 py-3 text-right">{t("common.actions")}</th>
+                  <th className="px-3 sm:px-6 py-3">{t("common.name")}</th>
+                  <th className="hidden px-3 sm:px-6 py-3 md:table-cell">{t("common.email")}</th>
+                  <th className="px-3 sm:px-6 py-3 text-right">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200">
                 {clients.map((client) => (
                   <tr key={client.id} className="hover:bg-zinc-50">
-                    <td className="px-6 py-3">
+                    <td className="px-3 sm:px-6 py-3">
                       <Link
                         href={`/coach/clients/${client.id}`}
                         className="text-sm font-medium text-zinc-900 hover:text-zinc-600"
@@ -188,10 +188,10 @@ export default function ClientsPage() {
                         {client.name}
                       </Link>
                     </td>
-                    <td className="px-6 py-3 text-sm text-zinc-500">
+                    <td className="hidden px-3 sm:px-6 py-3 text-sm text-zinc-500 md:table-cell">
                       {client.email}
                     </td>
-                    <td className="px-6 py-3 text-right">
+                    <td className="px-3 sm:px-6 py-3 text-right">
                       <Link href={`/coach/clients/${client.id}`}>
                         <Button variant="secondary" size="sm" className="mr-2">
                           {t("clients.progress")}
@@ -224,19 +224,19 @@ export default function ClientsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  <th className="px-6 py-3">{t("common.email")}</th>
-                  <th className="px-6 py-3">{t("common.status")}</th>
-                  <th className="hidden px-6 py-3 md:table-cell">{t("clients.expires")}</th>
-                  <th className="px-6 py-3 text-right">{t("common.actions")}</th>
+                  <th className="px-3 sm:px-6 py-3">{t("common.email")}</th>
+                  <th className="px-3 sm:px-6 py-3">{t("common.status")}</th>
+                  <th className="hidden px-3 sm:px-6 py-3 md:table-cell">{t("clients.expires")}</th>
+                  <th className="px-3 sm:px-6 py-3 text-right">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200">
                 {invitations.map((invitation) => (
                   <tr key={invitation.id}>
-                    <td className="px-6 py-3 text-sm font-medium text-zinc-900">
+                    <td className="px-3 sm:px-6 py-3 text-sm font-medium text-zinc-900">
                       {invitation.email}
                     </td>
-                    <td className="px-6 py-3 text-sm">
+                    <td className="px-3 sm:px-6 py-3 text-sm">
                       <span
                         className={`rounded-full px-2 py-1 text-xs font-medium ${
                           invitation.status === "expired"
@@ -247,10 +247,10 @@ export default function ClientsPage() {
                         {t(INVITATION_STATUS_KEY[invitation.status])}
                       </span>
                     </td>
-                    <td className="hidden px-6 py-3 text-sm text-zinc-500 md:table-cell">
+                    <td className="hidden px-3 sm:px-6 py-3 text-sm text-zinc-500 md:table-cell">
                       {formatDateTime(invitation.expires_at, locale)}
                     </td>
-                    <td className="px-6 py-3 text-right">
+                    <td className="px-3 sm:px-6 py-3 text-right">
                       <Button
                         variant="secondary"
                         size="sm"
