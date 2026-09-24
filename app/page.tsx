@@ -1,26 +1,13 @@
-"use client";
+import type { Metadata } from "next";
+import ProductWebsite from "@/components/marketing/product-website";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth/context";
+export const metadata: Metadata = {
+  title: "Lactic — Your training. Connected.",
+  description:
+    "Your programme, every set, your progress. Discover Lactic for athletes and Lactic Studio for coaches. Start coaching on the web with up to 3 clients for free.",
+  icons: { icon: "/lactic-icon.svg" },
+};
 
 export default function Home() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
-      router.replace("/login");
-    } else {
-      router.replace(user.role === "coach" ? "/coach/programs" : "/client/programs");
-    }
-  }, [user, loading, router]);
-
-  return (
-    <div className="flex h-screen items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-300 border-t-zinc-800" />
-    </div>
-  );
+  return <ProductWebsite />;
 }
