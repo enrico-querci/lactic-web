@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { Exercise, WorkoutExercise } from "@/lib/api/types";
 import type { TemplateExercisePayload } from "@/lib/api/endpoints/workout-templates";
 import { useLocale } from "@/lib/i18n/context";
+import { useUnsavedChangesGuard } from "@/lib/hooks/use-unsaved-changes-guard";
 import { WorkoutExerciseList } from "@/components/domain/workout-exercise-list";
 import type { WorkoutExerciseFormValues } from "@/components/domain/workout-exercise-form";
 import { Button } from "@/components/ui/button";
@@ -69,35 +70,7 @@ export function TemplateEditor({ heading, initialName, initialExercises, onSave 
   const dirty = snapshot(name, items) !== baseline;
   const canSave = dirty && name.trim() !== "" && !saving && !hasOpenEdit;
 
-  // While there is something to lose: ask before the page unloads (reload,
-  // closing the tab, an external link) and before an in-app link navigates
-  // away (the Back link and the sidebar alike, caught in the capture phase
-  // ahead of the router).
-  useEffect(() => {
-    if (!dirty) return;
-
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "";
-    };
-    const onClick = (e: MouseEvent) => {
-      const anchor = (e.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
-      if (!anchor || anchor.target === "_blank" || e.defaultPrevented) return;
-      const url = new URL(anchor.href, window.location.href);
-      if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
-      if (!confirm(t("templates.discardConfirm"))) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    };
-
-    window.addEventListener("beforeunload", onBeforeUnload);
-    document.addEventListener("click", onClick, true);
-    return () => {
-      window.removeEventListener("beforeunload", onBeforeUnload);
-      document.removeEventListener("click", onClick, true);
-    };
-  }, [dirty, t]);
+  useUnsavedChangesGuard(dirty, t("templates.discardConfirm"));
 
   const handleAdd = async (exercise: Exercise) => {
     const used = new Set(items.map((item) => item.position));
