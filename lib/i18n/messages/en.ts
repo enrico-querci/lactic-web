@@ -315,6 +315,10 @@ export const en = {
   "templates.detailHint":
     "Changes here only affect new workouts you build from this template, never the ones already in a program.",
   "templates.noExercises": "No exercises yet. Add the first one below.",
+  "templates.save": "Save template",
+  "templates.saved": 'Saved "{name}"',
+  "templates.autosaveHint": "Changes are saved as you make them.",
+  "templates.finishEditing": "Finish the open edit to save.",
 
   "error.coachBoundary": "This page hit a problem. Try again, or use the sidebar to go elsewhere.",
 

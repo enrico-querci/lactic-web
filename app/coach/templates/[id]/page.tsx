@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getWorkoutTemplate, updateWorkoutTemplate } from "@/lib/api/endpoints/workout-templates";
 import {
@@ -22,6 +22,7 @@ import { ErrorBanner } from "@/components/ui/error-banner";
 export default function TemplateDetailPage() {
   const { t } = useLocale();
   const params = useParams();
+  const router = useRouter();
   const templateId = Number(params.id);
 
   const query = useAsync(
@@ -33,6 +34,7 @@ export default function TemplateDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
+  const [editingExercise, setEditingExercise] = useState(false);
 
   // Same shape as the workout page's: each handler applies the response to
   // the loaded template instead of refetching it, and resolves to whether it
@@ -104,6 +106,13 @@ export default function TemplateDetailPage() {
       }));
     });
 
+  // Every change above is already saved as it is made, so Save has nothing
+  // left to send. What it does is give the work an ending: it returns to the
+  // list with a confirmation, and it waits while a form is still open so a
+  // half-filled one is not left behind unnoticed.
+  const hasOpenEdit = renaming || editingExercise;
+  const handleSave = () => router.push(`/coach/templates?saved=${templateId}`);
+
   if (query.initial) return <Loading />;
   if (query.error)
     return (
@@ -155,6 +164,17 @@ export default function TemplateDetailPage() {
         <p className="mt-1 text-sm text-zinc-500">{t("templates.detailHint")}</p>
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <Button onClick={handleSave} disabled={hasOpenEdit || mutating}>
+          {t("templates.save")}
+        </Button>
+        {hasOpenEdit ? (
+          <span className="text-xs text-zinc-500">{t("templates.finishEditing")}</span>
+        ) : (
+          <span className="text-xs text-zinc-400">{t("templates.autosaveHint")}</span>
+        )}
+      </div>
+
       {actionError && (
         <ErrorBanner
           message={actionError}
@@ -170,6 +190,7 @@ export default function TemplateDetailPage() {
         onAdd={handleAddExercise}
         onUpdate={handleUpdateExercise}
         onRemove={handleRemoveExercise}
+        onEditingChange={setEditingExercise}
       />
     </div>
   );
