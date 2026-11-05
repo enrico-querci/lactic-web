@@ -300,10 +300,21 @@ export const en = {
   "templates.confirmDelete": "Delete this template?",
   "templates.title": "Workout Templates",
   "templates.subtitle":
-    "Reuse a workout without rebuilding it. Each time you apply a template you get an independent copy, so editing one does not change the others.",
+    "Build a workout once and reuse it. Create a template here, or save an existing workout as one from the program builder. Each time you apply a template you get an independent copy, so editing one does not change the others.",
   "templates.exercises": "Exercises",
   "templates.noneYet":
-    "No templates yet. Use the Template button on a workout in the program builder to save one.",
+    "No templates yet. Create one with New template, or use the Template button on a workout in the program builder.",
+  "templates.new": "+ New template",
+  "templates.nameLabel": "Template name",
+  "templates.namePlaceholder": "Template name, e.g. Beginner legs",
+  "templates.create": "Create",
+  "templates.createFailed": "Could not create this template",
+  "templates.back": "Back to templates",
+  "templates.notFound": "Template not found",
+  "templates.rename": "Rename",
+  "templates.detailHint":
+    "Changes here only affect new workouts you build from this template, never the ones already in a program.",
+  "templates.noExercises": "No exercises yet. Add the first one below.",
 
   "error.coachBoundary": "This page hit a problem. Try again, or use the sidebar to go elsewhere.",
 

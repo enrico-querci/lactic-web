@@ -286,10 +286,21 @@ export const it: Record<MessageKey, string> = {
   "templates.confirmDelete": "Eliminare questo modello?",
   "templates.title": "Modelli di allenamento",
   "templates.subtitle":
-    "Riusa un allenamento senza ricrearlo. Ogni volta che applichi un modello ottieni una copia indipendente, quindi modificarne una non cambia le altre.",
+    "Crea un allenamento una volta e riusalo. Puoi creare un modello qui, oppure salvare un allenamento esistente come modello dal creatore di programmi. Ogni volta che applichi un modello ottieni una copia indipendente, quindi modificarne una non cambia le altre.",
   "templates.exercises": "Esercizi",
   "templates.noneYet":
-    "Nessun modello ancora. Usa il pulsante Modello su un allenamento nel creatore di programmi per salvarne uno.",
+    "Nessun modello ancora. Creane uno con Nuovo modello, oppure usa il pulsante Modello su un allenamento nel creatore di programmi.",
+  "templates.new": "+ Nuovo modello",
+  "templates.nameLabel": "Nome del modello",
+  "templates.namePlaceholder": "Nome del modello, es. Gambe principiante",
+  "templates.create": "Crea",
+  "templates.createFailed": "Impossibile creare questo modello",
+  "templates.back": "Torna ai modelli",
+  "templates.notFound": "Modello non trovato",
+  "templates.rename": "Rinomina",
+  "templates.detailHint":
+    "Le modifiche qui riguardano solo i nuovi allenamenti creati da questo modello, mai quelli già presenti in un programma.",
+  "templates.noExercises": "Nessun esercizio ancora. Aggiungi il primo qui sotto.",
 
   "error.coachBoundary":
     "Questa pagina ha riscontrato un problema. Riprova, oppure usa la barra laterale per andare altrove.",

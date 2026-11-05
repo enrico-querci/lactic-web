@@ -158,6 +158,11 @@ export interface WorkoutTemplate {
   created_at: string;
 }
 
+/** A template with its exercises, in the same shape as a workout's. */
+export interface WorkoutTemplateExtended extends WorkoutTemplate {
+  workout_exercises: WorkoutExercise[];
+}
+
 export interface ProgramAssignment {
   id: number;
   start_date: string;

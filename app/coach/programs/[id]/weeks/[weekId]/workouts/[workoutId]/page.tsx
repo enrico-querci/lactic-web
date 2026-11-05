@@ -11,10 +11,8 @@ import {
 import type { Exercise } from "@/lib/api/types";
 import { useAsync } from "@/lib/hooks/use-async";
 import { useLocale } from "@/lib/i18n/context";
-import { displayMuscleGroup } from "@/lib/constants/muscle-groups";
-import { ExercisePicker } from "@/components/domain/exercise-picker";
-import { WorkoutExerciseForm } from "@/components/domain/workout-exercise-form";
-import { Button } from "@/components/ui/button";
+import { WorkoutExerciseList } from "@/components/domain/workout-exercise-list";
+import type { WorkoutExerciseFormValues } from "@/components/domain/workout-exercise-form";
 import { Loading } from "@/components/ui/loading";
 import { ErrorState } from "@/components/ui/error-state";
 import { ErrorBanner } from "@/components/ui/error-banner";
@@ -32,8 +30,6 @@ export default function WorkoutDetailPage() {
     useCallback(() => getWorkout(programId, weekId, workoutId), [programId, weekId, workoutId])
   );
   const workout = query.data;
-  const [showPicker, setShowPicker] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
   const [mutating, setMutating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -41,14 +37,17 @@ export default function WorkoutDetailPage() {
   // query.mutate() directly instead of calling query.reload(): a second full
   // GET after every add/update/remove was pure round-trip cost for data the
   // response already carried, and neither request gave any visible sign it
-  // was happening.
-  const runMutation = async (fn: () => Promise<void>) => {
+  // was happening. Resolves to whether the mutation succeeded, which the
+  // exercise list uses to decide whether to close its picker or edit form.
+  const runMutation = async (fn: () => Promise<void>): Promise<boolean> => {
     setMutating(true);
     setActionError(null);
     try {
       await fn();
+      return true;
     } catch (e) {
       setActionError(e instanceof Error ? e.message : t("program.actionFailed"));
+      return false;
     } finally {
       setMutating(false);
     }
@@ -74,21 +73,9 @@ export default function WorkoutDetailPage() {
         ...w!,
         workout_exercises: [...w!.workout_exercises, workoutExercise],
       }));
-      setShowPicker(false);
     });
 
-  const handleUpdateExercise = (
-    exerciseId: number,
-    data: {
-      position: string;
-      sets: number;
-      reps: number;
-      rest_seconds: number;
-      rir: number | null;
-      weight: number | null;
-      notes: string | null;
-    }
-  ) =>
+  const handleUpdateExercise = (exerciseId: number, data: WorkoutExerciseFormValues) =>
     runMutation(async () => {
       const updated = await updateWorkoutExercise(workoutId, exerciseId, data);
       query.mutate((w) => ({
@@ -97,19 +84,16 @@ export default function WorkoutDetailPage() {
           we.id === exerciseId ? updated : we
         ),
       }));
-      setEditingId(null);
     });
 
-  const handleDeleteExercise = (exerciseId: number) => {
-    if (!confirm(t("workoutDetail.confirmRemoveExercise"))) return;
-    return runMutation(async () => {
+  const handleRemoveExercise = (exerciseId: number) =>
+    runMutation(async () => {
       await deleteWorkoutExercise(workoutId, exerciseId);
       query.mutate((w) => ({
         ...w!,
         workout_exercises: w!.workout_exercises.filter((we) => we.id !== exerciseId),
       }));
     });
-  };
 
   if (query.initial) return <Loading />;
   if (query.error)
@@ -150,82 +134,13 @@ export default function WorkoutDetailPage() {
         />
       )}
 
-      <div className={`space-y-3 transition-opacity ${mutating ? "opacity-60" : ""}`}>
-        {workout.workout_exercises
-          .sort((a, b) => a.position.localeCompare(b.position))
-          .map((we) => (
-            <div
-              key={we.id}
-              className="rounded-lg border border-zinc-200 bg-white p-4"
-            >
-              <div className="mb-2 flex items-center justify-between">
-                <div>
-                  <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white">
-                    {we.position}
-                  </span>
-                  <span className="font-medium text-zinc-900">
-                    {we.exercise.name}
-                  </span>
-                  <span className="ml-2 text-xs text-zinc-400">
-                    {displayMuscleGroup(we.exercise, t)}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() =>
-                      setEditingId(editingId === we.id ? null : we.id)
-                    }
-                    disabled={mutating}
-                    className="text-xs text-zinc-500 hover:text-zinc-700 disabled:opacity-50"
-                  >
-                    {editingId === we.id ? t("common.close") : t("common.edit")}
-                  </button>
-                  <button
-                    onClick={() => handleDeleteExercise(we.id)}
-                    disabled={mutating}
-                    className="text-xs text-red-400 hover:text-red-600 disabled:opacity-50"
-                  >
-                    {t("common.remove")}
-                  </button>
-                </div>
-              </div>
-
-              {editingId === we.id ? (
-                <WorkoutExerciseForm
-                  initial={we}
-                  position={we.position}
-                  onSave={(data) => handleUpdateExercise(we.id, data)}
-                  onCancel={() => setEditingId(null)}
-                />
-              ) : (
-                <div className="flex gap-4 text-sm text-zinc-500">
-                  <span>
-                    {we.sets} x {we.reps}
-                  </span>
-                  <span>{t("workout.restSeconds", { seconds: we.rest_seconds })}</span>
-                  {we.rir != null && <span>RIR {we.rir}</span>}
-                  {we.weight != null && <span>{we.weight}kg</span>}
-                  {we.notes && (
-                    <span className="italic text-zinc-400">{we.notes}</span>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-      </div>
-
-      <div className="mt-4">
-        {showPicker ? (
-          <ExercisePicker
-            onSelect={handleAddExercise}
-            onCancel={() => setShowPicker(false)}
-          />
-        ) : (
-          <Button variant="secondary" onClick={() => setShowPicker(true)}>
-            {t("workoutDetail.addExercise")}
-          </Button>
-        )}
-      </div>
+      <WorkoutExerciseList
+        exercises={workout.workout_exercises}
+        busy={mutating}
+        onAdd={handleAddExercise}
+        onUpdate={handleUpdateExercise}
+        onRemove={handleRemoveExercise}
+      />
     </div>
   );
 }
