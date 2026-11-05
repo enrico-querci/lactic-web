@@ -11,6 +11,7 @@ import type { ReactNode } from "react";
 import type { MessageKey } from "@/lib/i18n/messages/en";
 
 const NAV_ITEMS: { href: string; labelKey: MessageKey }[] = [
+  { href: "/coach", labelKey: "nav.home" },
   { href: "/coach/programs", labelKey: "nav.programs" },
   { href: "/coach/clients", labelKey: "nav.clients" },
   { href: "/coach/exercises", labelKey: "nav.exercises" },
@@ -52,7 +53,9 @@ function Sidebar() {
   const navLinks = (
     <nav className="flex-1 px-3 py-4">
       {NAV_ITEMS.map((item) => {
-        const isActive = pathname.startsWith(item.href);
+        // Home is /coach itself, which every other route also starts with.
+        const isActive =
+          item.href === "/coach" ? pathname === "/coach" : pathname.startsWith(item.href);
         return (
           <Link
             key={item.href}

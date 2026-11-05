@@ -62,6 +62,43 @@ export interface ClientProfile {
   invitation_expires_at: string | null;
 }
 
+export type AttentionKind =
+  | "inactive"
+  | "program_ended"
+  | "program_ending"
+  | "no_program"
+  | "invitation_expired"
+  | "invitation_expiring";
+
+/** Something the coach should look at, from the dashboard. */
+export interface AttentionItem {
+  kind: AttentionKind;
+  /** Null for an invitation that has not been accepted. */
+  client_id: number | null;
+  profile_id: number | null;
+  /** The client's name, or the invited email when there is no profile. */
+  name: string;
+  /** Days without training, or until/since a program ends; null otherwise. */
+  days: number | null;
+  never_trained?: boolean;
+}
+
+export interface CoachDashboard {
+  clients: { active: number; slots_used: number; limit: number | null };
+  sessions: { this_week: number; last_week: number };
+  pending_invitations: number;
+  inactive_clients: number;
+  attention: AttentionItem[];
+  attention_total: number;
+  recent_activity: {
+    id: number;
+    client_id: number;
+    client_name: string;
+    workout_name: string;
+    completed_at: string;
+  }[];
+}
+
 export interface MuscleRef {
   key: string;
   name: string;
