@@ -66,7 +66,8 @@ export default function TemplatesPage() {
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
                 <th className="px-6 py-3">{t("common.name")}</th>
-                <th className="px-6 py-3">{t("common.created")}</th>
+                <th className="px-3 py-3 sm:px-6">{t("templates.exercises")}</th>
+                <th className="hidden px-6 py-3 md:table-cell">{t("common.created")}</th>
                 <th className="px-6 py-3 text-right">{t("common.actions")}</th>
               </tr>
             </thead>
@@ -76,7 +77,10 @@ export default function TemplatesPage() {
                   <td className="px-6 py-3 text-sm font-medium text-zinc-900">
                     {template.name}
                   </td>
-                  <td className="px-6 py-3 text-sm text-zinc-500">
+                  <td className="px-3 py-3 text-sm text-zinc-500 sm:px-6">
+                    {template.exercise_count}
+                  </td>
+                  <td className="hidden px-6 py-3 text-sm text-zinc-500 md:table-cell">
                     {formatDate(template.created_at, locale)}
                   </td>
                   <td className="px-6 py-3 text-right">

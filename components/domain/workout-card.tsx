@@ -10,6 +10,7 @@ interface WorkoutCardProps {
   weekId: number;
   onDelete: (id: number) => void;
   onDuplicate: (id: number) => void;
+  onSaveAsTemplate: (workout: Workout) => void;
 }
 
 export function WorkoutCard({
@@ -18,26 +19,37 @@ export function WorkoutCard({
   weekId,
   onDelete,
   onDuplicate,
+  onSaveAsTemplate,
 }: WorkoutCardProps) {
   const { t } = useLocale();
   const volumeEntries = Object.entries(workout.volume_sets);
 
   return (
     <div className="rounded-lg border border-zinc-200 bg-white p-4">
-      <div className="mb-2 flex items-start justify-between">
+      {/* The name gets the full card width and the actions wrap on a row of
+          their own: at lg: the week is seven equal columns, where a
+          side-by-side name and three buttons overflowed the card. */}
+      <div className="mb-2">
         <Link
           href={`/coach/programs/${programId}/weeks/${weekId}/workouts/${workout.id}`}
-          className="font-medium text-zinc-900 hover:text-zinc-600"
+          className="block break-words font-medium text-zinc-900 hover:text-zinc-600"
         >
           {workout.name}
         </Link>
-        <div className="flex gap-1">
+        <div className="mt-1 flex flex-wrap gap-1">
           <button
             onClick={() => onDuplicate(workout.id)}
             className="rounded p-1 text-xs text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
             title={t("common.duplicate")}
           >
             {t("workoutCard.copy")}
+          </button>
+          <button
+            onClick={() => onSaveAsTemplate(workout)}
+            className="rounded p-1 text-xs text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+            title={t("workoutCard.saveAsTemplate")}
+          >
+            {t("workoutCard.template")}
           </button>
           <button
             onClick={() => onDelete(workout.id)}

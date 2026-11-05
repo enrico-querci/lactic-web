@@ -1,5 +1,5 @@
 import { get, post, del } from "@/lib/api/client";
-import type { WorkoutTemplate } from "@/lib/api/types";
+import type { Workout, WorkoutTemplate } from "@/lib/api/types";
 
 export function getWorkoutTemplates() {
   return get<WorkoutTemplate[]>("/coach/workout_templates");
@@ -16,9 +16,13 @@ export function deleteWorkoutTemplate(id: number) {
   return del(`/coach/workout_templates/${id}`);
 }
 
+/**
+ * Adds the template's exercises to a week as a new workout. Every call is an
+ * independent copy, so the same template can go on several days.
+ */
 export function applyWorkoutTemplate(
   id: number,
-  data: { week_id: number; day: number }
+  data: { target_week_id: number; day: number }
 ) {
-  return post<void>(`/coach/workout_templates/${id}/apply`, data);
+  return post<Workout>(`/coach/workout_templates/${id}/apply`, data);
 }

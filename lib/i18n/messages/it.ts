@@ -73,13 +73,21 @@ export const it: Record<MessageKey, string> = {
   "program.addWeek": "+ Aggiungi settimana",
   "program.noWeeksYet": "Nessuna settimana ancora. Aggiungi la prima per iniziare a costruire il programma.",
   "program.confirmDeleteWorkout": "Eliminare questo allenamento?",
+  "program.templateSaved": '"{name}" salvato come modello',
 
   "weekPanel.addWorkout": "+ Allenamento",
   "weekPanel.confirmDeleteWeek": "Eliminare questa settimana e tutti i suoi allenamenti?",
   "weekPanel.workoutNamePlaceholder": "Nome allenamento",
+  "weekPanel.startFrom": "Parti da",
+  "weekPanel.emptyWorkout": "Allenamento vuoto",
+  "weekPanel.templateOption": "{name} ({count})",
+  "weekPanel.saveTemplateTitle": "Salva come modello",
+  "weekPanel.templateNameLabel": "Nome del modello",
 
   "workoutCard.copy": "Copia",
   "workoutCard.del": "Elim.",
+  "workoutCard.template": "Modello",
+  "workoutCard.saveAsTemplate": "Salva come modello",
 
   "workout.loadFailed": "Impossibile caricare questo allenamento",
   "workout.startFailed": "Impossibile avviare l'allenamento",
@@ -277,9 +285,11 @@ export const it: Record<MessageKey, string> = {
   "templates.deleteFailed": "Impossibile eliminare questo modello",
   "templates.confirmDelete": "Eliminare questo modello?",
   "templates.title": "Modelli di allenamento",
-  "templates.subtitle": "Salva gli allenamenti come modelli e applicali ad altre settimane.",
+  "templates.subtitle":
+    "Riusa un allenamento senza ricrearlo. Ogni volta che applichi un modello ottieni una copia indipendente, quindi modificarne una non cambia le altre.",
+  "templates.exercises": "Esercizi",
   "templates.noneYet":
-    "Nessun modello ancora. Salva un allenamento come modello dal creatore di programmi.",
+    "Nessun modello ancora. Usa il pulsante Modello su un allenamento nel creatore di programmi per salvarne uno.",
 
   "error.coachBoundary":
     "Questa pagina ha riscontrato un problema. Riprova, oppure usa la barra laterale per andare altrove.",
