@@ -13,18 +13,38 @@ export function getWorkoutTemplate(id: number) {
   return get<WorkoutTemplateExtended>(`/coach/workout_templates/${id}`);
 }
 
+/** One exercise of a template as it is sent when saving. */
+export interface TemplateExercisePayload {
+  exercise_id: number;
+  sets: number;
+  reps: number;
+  rest_seconds: number;
+  rir: number | null;
+  weight: number | null;
+  notes: string | null;
+}
+
 /**
- * With `source_workout_id` the template starts as a copy of that workout's
- * exercises; without it, it starts empty.
+ * Three ways to start a template: with `source_workout_id`, as a copy of that
+ * workout's exercises; with `workout_exercises`, holding that list; with
+ * neither, empty. The name and exercises are written together or not at all.
  */
 export function createWorkoutTemplate(data: {
   name: string;
   source_workout_id?: number;
+  workout_exercises?: TemplateExercisePayload[];
 }) {
   return post<WorkoutTemplate>("/coach/workout_templates", data);
 }
 
-export function updateWorkoutTemplate(id: number, data: { name: string }) {
+/**
+ * Each part is applied only when present, and together. `workout_exercises`
+ * is the complete list as it should be after saving, not a change to it.
+ */
+export function updateWorkoutTemplate(
+  id: number,
+  data: { name?: string; workout_exercises?: TemplateExercisePayload[] }
+) {
   return patch<WorkoutTemplate>(`/coach/workout_templates/${id}`, data);
 }
 
