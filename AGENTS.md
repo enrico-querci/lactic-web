@@ -230,6 +230,20 @@ the first Firebase App Distribution releases follow.
   the normalized invited email.
 - Development/test may use `/api/v1/auth/dev_login`; that route does not exist
   in production.
+- App Review signs in to Lactic without a Google or Apple identity through
+  `POST /api/v1/auth/review_access` with `{ code }`, which the apps offer beside
+  the invitation code. It is separate from invitations and leaves their
+  social-email match untouched. It exists only while `REVIEW_ACCESS_CODE` is set
+  (16 characters at least; anything shorter counts as unset), signs in one
+  fixed demo client (`Review::DemoAccount`) and never creates a user or reads a
+  role, email or id from the request. The demo client and its coach have
+  `.invalid` addresses, which no real identity can carry, and the demo client
+  comes with a coach, a four-week programme and a few weeks of logged sessions
+  built from the live catalog. It rebuilds itself after 10 days without use or
+  if the reviewer deletes it. Five attempts a minute for the endpoint as a whole (per
+  server process, not per IP: behind Railway's proxy Rails sees a different
+  internal address on every request); a wrong code and an unset one answer the
+  same 401.
 
 ### 2.4 Production infrastructure
 
@@ -287,6 +301,15 @@ the first Firebase App Distribution releases follow.
   every coach simply reads as Free without it configured.
 - Never write secret values in source, documentation, logs, issues, or
   commits. Document variable names only.
+
+#### App Review access
+
+- Railway variable: `REVIEW_ACCESS_CODE`. Optional, like Resend and RevenueCat:
+  unset (or shorter than 16 characters) the endpoint refuses every code. The
+  code is given to App Review in the review notes; remove the variable to
+  close the entrance, and change it to rotate the code.
+- Never write the code in source, documentation, logs, issues, or commits.
+  Document the variable name only.
 
 #### Sign in with Apple
 
@@ -354,15 +377,17 @@ Verified on **2026-11-05**:
 
 | Component | Source commit | Deployment | Result |
 | --- | --- | --- | --- |
-| API | `992df3d7b49951321de54f6ced1c097675f3b901` | Railway `a0322b2f-f41f-4987-999d-00fd27916c51` | `SUCCESS`; `/up` returned HTTP 200 |
-| Web | `5ebb1be497c75f46c50db967a7a27bbf0429b23d` | Vercel `dpl_6yognBjZ7QFoQcFtpB1j5cc865uu` | `READY`; `/`, `/login`, `/coach/clients` and `/coach/templates` returned HTTP 200 |
+| API | `b48c60cbce8d246b7e1194f8ea6624e7313b92ee` | Railway `d2b4dee6-f0e0-4597-9427-86963fab7c9a` | `SUCCESS`; `/up` returned HTTP 200; `POST /api/v1/auth/review_access` with a wrong code returned 401 and, in a burst, 429 |
+| Web | `6510d112b7e7d19adb12fc4c339dea45ad9f7b1f` | Vercel `dpl_FoTxsWe8BbUW2xY8U6G3yJ3FciFd` | `READY`; `/`, `/login`, `/coach`, `/coach/clients` and `/coach/programs` returned HTTP 200 |
 
-Both commits equal `origin/main` of their repository at verification time.
+Both commits equal `origin/main` of their repository at verification time;
+documentation-only commits made afterwards do not change what runs.
 
 Merged pull requests:
 
-- API: `enrico-querci/lactic-api#79`
-- Web: `enrico-querci/lactic-web#42`
+- API: `enrico-querci/lactic-api#83` (review access, #81 and #82 before it;
+  the Home dashboard endpoint is #80)
+- Web: `enrico-querci/lactic-web#43` (the Home)
 
 ---
 
@@ -573,6 +598,7 @@ WorkoutSession
 | Assign programs | Assign a program with start date and notes |
 | Review progress | Inspect sessions, actual weights, and repetitions |
 | Planning metrics | Volume sets and estimated workout duration |
+| Home | One screen of what needs attention: quick actions, clients and plan usage, this week's workouts against last week's, clients who stopped training, programmes ending, lapsed invitations, and recent activity |
 | Billing | View current plan and usage; subscribe or upgrade via RevenueCat |
 | Delete account | `DELETE /api/v1/coach/account`, offered in native Studio. Refused (409, `subscription_active`) while a paid plan still renews; clients keep their accounts, but the coach's programmes and the sessions logged against them go |
 
@@ -582,6 +608,16 @@ The Next.js application already contains both role-specific views.
 
 #### Coach routes and capabilities
 
+- `/coach`: Home. One request to `GET /api/v1/coach/dashboard`
+  (`CoachDashboard`, computed from stored data, nothing written). Quick actions
+  (add client, new programme, assign, new workout); four figures (active
+  clients against the plan's limit, workouts this week against last week,
+  inactive clients, pending invitations); a plan notice when one slot or none is
+  left; "needs attention", most urgent first and capped at 10 (a client who has
+  not trained for 7+ days, a programme that is over or ends within 7 days, a
+  client with no active programme, an invitation that lapsed or lapses within 2
+  days); and the 8 latest completed workouts. Weeks are calendar weeks from
+  Monday in the server time zone (UTC).
 - `/coach/clients`: every client with a status (active / invited / not
   invited) and the matching action; invitations sent from the mobile apps
   (no profile) are listed apart.
@@ -907,6 +943,9 @@ make build  # assembleDebug and assembleRelease (R8)
 - Preserve the Sign in with Apple invariants: the verifier's audience list is
   never empty, a relay address never satisfies an invitation's email match,
   and deleting an account revokes its stored Apple token first.
+- Preserve the review access invariants: it is off unless `REVIEW_ACCESS_CODE`
+  is long enough, it only ever signs in the fixed demo client, it never creates
+  a user or accepts a role, and it never touches invitations or real accounts.
 - Preserve the billing invariants: the RevenueCat webhook is
   signature-verified and idempotent per `event_id`; stored subscription
   state is always re-fetched from RevenueCat rather than trusted from a
