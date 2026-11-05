@@ -6,6 +6,11 @@ import Link from "next/link";
 import { getProgram } from "@/lib/api/endpoints/programs";
 import { createWeek, deleteWeek } from "@/lib/api/endpoints/weeks";
 import {
+  applyWorkoutTemplate,
+  createWorkoutTemplate,
+  getWorkoutTemplates,
+} from "@/lib/api/endpoints/workout-templates";
+import {
   createWorkout,
   deleteWorkout,
   duplicateWorkout,
@@ -28,8 +33,13 @@ export default function ProgramDetailPage() {
     useCallback(() => getProgram(programId), [programId])
   );
   const program = query.data;
+  // Only feeds the "start from" picker, so a failed load just leaves it out
+  // rather than blocking the builder.
+  const templatesQuery = useAsync("templates", useCallback(() => getWorkoutTemplates(), []));
+  const templates = templatesQuery.data ?? [];
   const [mutating, setMutating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   // Each handler below applies the mutation's own response to `program`
   // via query.mutate() directly instead of calling query.reload(): reload()
@@ -74,6 +84,24 @@ export default function ProgramDetailPage() {
           w.id === weekId ? { ...w, workouts: [...w.workouts, workout] } : w
         ),
       }));
+    });
+
+  const handleApplyTemplate = (weekId: number, templateId: number, day: number) =>
+    runMutation(async () => {
+      const workout = await applyWorkoutTemplate(templateId, { target_week_id: weekId, day });
+      query.mutate((p) => ({
+        ...p!,
+        weeks: p!.weeks.map((w) =>
+          w.id === weekId ? { ...w, workouts: [...w.workouts, workout] } : w
+        ),
+      }));
+    });
+
+  const handleSaveAsTemplate = (workoutId: number, name: string) =>
+    runMutation(async () => {
+      const template = await createWorkoutTemplate({ name, source_workout_id: workoutId });
+      templatesQuery.mutate((current) => [...(current ?? []), template]);
+      setNotice(t("program.templateSaved", { name: template.name }));
     });
 
   const handleDeleteWorkout = (weekId: number, workoutId: number) => {
@@ -140,6 +168,22 @@ export default function ProgramDetailPage() {
         />
       )}
 
+      {notice && (
+        <div
+          role="status"
+          className="mb-4 flex items-center justify-between gap-3 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+        >
+          <span>{notice}</span>
+          <button
+            type="button"
+            onClick={() => setNotice(null)}
+            className="shrink-0 rounded-md border border-green-300 bg-white px-3 py-1 text-xs font-medium hover:bg-green-50"
+          >
+            {t("common.dismiss")}
+          </button>
+        </div>
+      )}
+
       {program.weeks.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-12 text-center text-zinc-400">
           <p>{t("program.noWeeksYet")}</p>
@@ -153,7 +197,10 @@ export default function ProgramDetailPage() {
                 key={week.id}
                 week={week}
                 programId={programId}
+                templates={templates}
                 onAddWorkout={handleAddWorkout}
+                onApplyTemplate={handleApplyTemplate}
+                onSaveAsTemplate={handleSaveAsTemplate}
                 onDeleteWorkout={handleDeleteWorkout}
                 onDuplicateWorkout={handleDuplicateWorkout}
                 onDeleteWeek={handleDeleteWeek}

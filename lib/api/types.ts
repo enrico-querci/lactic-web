@@ -149,7 +149,12 @@ export interface WorkoutExercise {
 export interface WorkoutTemplate {
   id: number;
   name: string;
-  source_workout_id: number;
+  /**
+   * Where the template was saved from. A template owns a copy of its
+   * exercises, so this is null once that workout has been deleted.
+   */
+  source_workout_id: number | null;
+  exercise_count: number;
   created_at: string;
 }
 

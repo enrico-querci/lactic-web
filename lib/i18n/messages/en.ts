@@ -79,13 +79,21 @@ export const en = {
   "program.addWeek": "+ Add Week",
   "program.noWeeksYet": "No weeks yet. Add your first week to start building.",
   "program.confirmDeleteWorkout": "Delete this workout?",
+  "program.templateSaved": 'Saved "{name}" as a template',
 
   "weekPanel.addWorkout": "+ Workout",
   "weekPanel.confirmDeleteWeek": "Delete this week and all its workouts?",
   "weekPanel.workoutNamePlaceholder": "Workout name",
+  "weekPanel.startFrom": "Start from",
+  "weekPanel.emptyWorkout": "Empty workout",
+  "weekPanel.templateOption": "{name} ({count})",
+  "weekPanel.saveTemplateTitle": "Save as template",
+  "weekPanel.templateNameLabel": "Template name",
 
   "workoutCard.copy": "Copy",
   "workoutCard.del": "Del",
+  "workoutCard.template": "Template",
+  "workoutCard.saveAsTemplate": "Save as template",
 
   "workout.loadFailed": "Could not load this workout",
   "workout.startFailed": "Could not start the workout",
@@ -291,9 +299,11 @@ export const en = {
   "templates.deleteFailed": "Could not delete this template",
   "templates.confirmDelete": "Delete this template?",
   "templates.title": "Workout Templates",
-  "templates.subtitle": "Save workouts as templates and apply them to other weeks.",
+  "templates.subtitle":
+    "Reuse a workout without rebuilding it. Each time you apply a template you get an independent copy, so editing one does not change the others.",
+  "templates.exercises": "Exercises",
   "templates.noneYet":
-    "No templates yet. Save a workout as a template from the program builder.",
+    "No templates yet. Use the Template button on a workout in the program builder to save one.",
 
   "error.coachBoundary": "This page hit a problem. Try again, or use the sidebar to go elsewhere.",
 
