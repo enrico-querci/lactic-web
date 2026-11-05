@@ -20,6 +20,25 @@ export function formatDateTime(dateString: string, locale: Locale = "en"): strin
   });
 }
 
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+/**
+ * "2 hours ago", "yesterday", in the user's language. Beyond a week it gives
+ * the date, since "23 days ago" is harder to place than "Oct 14".
+ */
+export function formatRelativeTime(dateString: string, locale: Locale = "en", now = Date.now()): string {
+  const elapsed = now - new Date(dateString).getTime();
+  const formatter = new Intl.RelativeTimeFormat(INTL_LOCALE[locale], { numeric: "auto" });
+
+  if (elapsed < MINUTE) return formatter.format(0, "second");
+  if (elapsed < HOUR) return formatter.format(-Math.floor(elapsed / MINUTE), "minute");
+  if (elapsed < DAY) return formatter.format(-Math.floor(elapsed / HOUR), "hour");
+  if (elapsed < 7 * DAY) return formatter.format(-Math.floor(elapsed / DAY), "day");
+  return formatDate(dateString, locale);
+}
+
 // "min"/"h" aren't translated per-locale: kept as universally-understood
 // abbreviations (also how Italian gym/fitness apps commonly render duration)
 // rather than introducing a locale branch for two characters.
