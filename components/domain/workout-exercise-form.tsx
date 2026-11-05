@@ -5,18 +5,20 @@ import type { WorkoutExercise } from "@/lib/api/types";
 import { useLocale } from "@/lib/i18n/context";
 import { Button } from "@/components/ui/button";
 
+export interface WorkoutExerciseFormValues {
+  position: string;
+  sets: number;
+  reps: number;
+  rest_seconds: number;
+  rir: number | null;
+  weight: number | null;
+  notes: string | null;
+}
+
 interface WorkoutExerciseFormProps {
   initial?: WorkoutExercise;
   position: string;
-  onSave: (data: {
-    position: string;
-    sets: number;
-    reps: number;
-    rest_seconds: number;
-    rir: number | null;
-    weight: number | null;
-    notes: string | null;
-  }) => void;
+  onSave: (data: WorkoutExerciseFormValues) => void;
   onCancel: () => void;
 }
 

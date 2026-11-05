@@ -1,15 +1,31 @@
-import { get, post, del } from "@/lib/api/client";
-import type { Workout, WorkoutTemplate } from "@/lib/api/types";
+import { get, post, patch, del } from "@/lib/api/client";
+import type {
+  Workout,
+  WorkoutTemplate,
+  WorkoutTemplateExtended,
+} from "@/lib/api/types";
 
 export function getWorkoutTemplates() {
   return get<WorkoutTemplate[]>("/coach/workout_templates");
 }
 
+export function getWorkoutTemplate(id: number) {
+  return get<WorkoutTemplateExtended>(`/coach/workout_templates/${id}`);
+}
+
+/**
+ * With `source_workout_id` the template starts as a copy of that workout's
+ * exercises; without it, it starts empty.
+ */
 export function createWorkoutTemplate(data: {
   name: string;
-  source_workout_id: number;
+  source_workout_id?: number;
 }) {
   return post<WorkoutTemplate>("/coach/workout_templates", data);
+}
+
+export function updateWorkoutTemplate(id: number, data: { name: string }) {
+  return patch<WorkoutTemplate>(`/coach/workout_templates/${id}`, data);
 }
 
 export function deleteWorkoutTemplate(id: number) {

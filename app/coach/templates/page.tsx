@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   getWorkoutTemplates,
+  createWorkoutTemplate,
   deleteWorkoutTemplate,
 } from "@/lib/api/endpoints/workout-templates";
 import { formatDate } from "@/lib/utils/format";
@@ -16,10 +19,14 @@ import { ErrorBanner } from "@/components/ui/error-banner";
 
 export default function TemplatesPage() {
   const { t, locale } = useLocale();
+  const router = useRouter();
   const query = useAsync("templates", useCallback(() => getWorkoutTemplates(), []));
   const templates = query.data ?? [];
   const [busyId, setBusyId] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [creating, setCreating] = useState(false);
 
   const handleDelete = async (id: number) => {
     if (!confirm(t("templates.confirmDelete"))) return;
@@ -35,6 +42,22 @@ export default function TemplatesPage() {
     }
   };
 
+  // A new template starts empty; the coach lands on its page to add exercises.
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newName.trim();
+    if (!name) return;
+    setCreating(true);
+    setActionError(null);
+    try {
+      const template = await createWorkoutTemplate({ name });
+      router.push(`/coach/templates/${template.id}`);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : t("templates.createFailed"));
+      setCreating(false);
+    }
+  };
+
   if (query.initial) return <Loading />;
   if (query.error)
     return (
@@ -43,12 +66,49 @@ export default function TemplatesPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-zinc-900">
-          {t("templates.title")}
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500">{t("templates.subtitle")}</p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl font-bold text-zinc-900">
+            {t("templates.title")}
+          </h1>
+          <p className="mt-1 text-sm text-zinc-500">{t("templates.subtitle")}</p>
+        </div>
+        {!showCreate && (
+          <Button onClick={() => setShowCreate(true)}>{t("templates.new")}</Button>
+        )}
       </div>
+
+      {showCreate && (
+        <form
+          onSubmit={handleCreate}
+          className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3"
+        >
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder={t("templates.namePlaceholder")}
+            aria-label={t("templates.nameLabel")}
+            autoFocus
+            className="min-w-[14rem] flex-1 rounded-md border border-zinc-300 px-3 py-1.5 text-sm"
+          />
+          <Button type="submit" size="sm" disabled={creating || !newName.trim()}>
+            {creating ? t("common.working") : t("templates.create")}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={creating}
+            onClick={() => {
+              setShowCreate(false);
+              setNewName("");
+            }}
+          >
+            {t("common.cancel")}
+          </Button>
+        </form>
+      )}
 
       {actionError && (
         <ErrorBanner
@@ -75,7 +135,12 @@ export default function TemplatesPage() {
               {templates.map((template) => (
                 <tr key={template.id} className="hover:bg-zinc-50">
                   <td className="px-6 py-3 text-sm font-medium text-zinc-900">
-                    {template.name}
+                    <Link
+                      href={`/coach/templates/${template.id}`}
+                      className="hover:text-zinc-600 hover:underline"
+                    >
+                      {template.name}
+                    </Link>
                   </td>
                   <td className="px-3 py-3 text-sm text-zinc-500 sm:px-6">
                     {template.exercise_count}
@@ -84,14 +149,21 @@ export default function TemplatesPage() {
                     {formatDate(template.created_at, locale)}
                   </td>
                   <td className="px-6 py-3 text-right">
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      disabled={busyId === template.id}
-                      onClick={() => handleDelete(template.id)}
-                    >
-                      {busyId === template.id ? t("common.working") : t("common.delete")}
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Link href={`/coach/templates/${template.id}`}>
+                        <Button variant="secondary" size="sm">
+                          {t("common.edit")}
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        disabled={busyId === template.id}
+                        onClick={() => handleDelete(template.id)}
+                      >
+                        {busyId === template.id ? t("common.working") : t("common.delete")}
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
