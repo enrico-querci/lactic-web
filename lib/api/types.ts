@@ -38,6 +38,30 @@ export interface ClientInvitation {
   coach_name: string;
 }
 
+export type ClientLevel = "beginner" | "intermediate" | "advanced";
+export type ClientGoal = "strength" | "muscle_gain" | "fat_loss" | "health" | "other";
+
+/**
+ * The coach's own record of a client. It can exist before the person has an
+ * account: `prepared` (not invited), `invited` (a pending invitation for the
+ * email) or `active` (they accepted, and `user_id` is their account).
+ */
+export interface ClientProfile {
+  id: number;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  level: ClientLevel | null;
+  goal: ClientGoal | null;
+  limitations: string | null;
+  notes: string | null;
+  user_id: number | null;
+  created_at: string;
+  status: "active" | "invited" | "prepared";
+  invitation_id: number | null;
+  invitation_expires_at: string | null;
+}
+
 export interface MuscleRef {
   key: string;
   name: string;
