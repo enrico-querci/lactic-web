@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Exercise, WorkoutExercise } from "@/lib/api/types";
 import { useLocale } from "@/lib/i18n/context";
 import { displayMuscleGroup } from "@/lib/constants/muscle-groups";
@@ -25,6 +25,12 @@ interface WorkoutExerciseListProps {
   onAdd: (exercise: Exercise) => Promise<boolean>;
   onUpdate: (id: number, data: WorkoutExerciseFormValues) => Promise<boolean>;
   onRemove: (id: number) => Promise<boolean>;
+  /**
+   * Called whenever an edit form or the exercise picker opens or closes, so
+   * a caller can hold back an action (a Save button) that would otherwise
+   * leave a half-filled form behind.
+   */
+  onEditingChange?: (editing: boolean) => void;
 }
 
 /**
@@ -39,10 +45,16 @@ export function WorkoutExerciseList({
   onAdd,
   onUpdate,
   onRemove,
+  onEditingChange,
 }: WorkoutExerciseListProps) {
   const { t } = useLocale();
   const [showPicker, setShowPicker] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  const editing = showPicker || editingId !== null;
+  useEffect(() => {
+    onEditingChange?.(editing);
+  }, [editing, onEditingChange]);
 
   const handleAdd = async (exercise: Exercise) => {
     if (await onAdd(exercise)) setShowPicker(false);

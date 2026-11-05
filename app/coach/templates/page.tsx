@@ -1,14 +1,15 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   getWorkoutTemplates,
   createWorkoutTemplate,
   deleteWorkoutTemplate,
 } from "@/lib/api/endpoints/workout-templates";
 import { formatDate } from "@/lib/utils/format";
+import type { WorkoutTemplate } from "@/lib/api/types";
 import { useAsync } from "@/lib/hooks/use-async";
 import { useLocale } from "@/lib/i18n/context";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,38 @@ import { Loading } from "@/components/ui/loading";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { ErrorBanner } from "@/components/ui/error-banner";
+
+/**
+ * Confirmation shown after a template's Save button, which comes back here
+ * with ?saved=<id>. useSearchParams (rather than reading window.location)
+ * because the URL is only updated after a client-side navigation has
+ * rendered, and it needs the Suspense boundary around it for the static page.
+ */
+function SavedNotice({ templates }: { templates: WorkoutTemplate[] }) {
+  const { t } = useLocale();
+  const searchParams = useSearchParams();
+  const [dismissed, setDismissed] = useState(false);
+
+  const savedId = Number(searchParams.get("saved"));
+  const template = savedId ? templates.find((tpl) => tpl.id === savedId) : undefined;
+  if (!template || dismissed) return null;
+
+  return (
+    <div
+      role="status"
+      className="mb-4 flex items-center justify-between gap-3 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+    >
+      <span>{t("templates.saved", { name: template.name })}</span>
+      <button
+        type="button"
+        onClick={() => setDismissed(true)}
+        className="shrink-0 rounded-md border border-green-300 bg-white px-3 py-1 text-xs font-medium hover:bg-green-50"
+      >
+        {t("common.dismiss")}
+      </button>
+    </div>
+  );
+}
 
 export default function TemplatesPage() {
   const { t, locale } = useLocale();
@@ -109,6 +142,10 @@ export default function TemplatesPage() {
           </Button>
         </form>
       )}
+
+      <Suspense fallback={null}>
+        <SavedNotice templates={templates} />
+      </Suspense>
 
       {actionError && (
         <ErrorBanner

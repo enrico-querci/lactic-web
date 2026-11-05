@@ -301,6 +301,10 @@ export const it: Record<MessageKey, string> = {
   "templates.detailHint":
     "Le modifiche qui riguardano solo i nuovi allenamenti creati da questo modello, mai quelli già presenti in un programma.",
   "templates.noExercises": "Nessun esercizio ancora. Aggiungi il primo qui sotto.",
+  "templates.save": "Salva modello",
+  "templates.saved": '"{name}" salvato',
+  "templates.autosaveHint": "Le modifiche vengono salvate man mano.",
+  "templates.finishEditing": "Termina la modifica aperta per salvare.",
 
   "error.coachBoundary":
     "Questa pagina ha riscontrato un problema. Riprova, oppure usa la barra laterale per andare altrove.",
