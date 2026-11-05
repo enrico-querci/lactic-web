@@ -2,10 +2,9 @@
 
 import { Suspense, useCallback, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   getWorkoutTemplates,
-  createWorkoutTemplate,
   deleteWorkoutTemplate,
 } from "@/lib/api/endpoints/workout-templates";
 import { formatDate } from "@/lib/utils/format";
@@ -52,14 +51,10 @@ function SavedNotice({ templates }: { templates: WorkoutTemplate[] }) {
 
 export default function TemplatesPage() {
   const { t, locale } = useLocale();
-  const router = useRouter();
   const query = useAsync("templates", useCallback(() => getWorkoutTemplates(), []));
   const templates = query.data ?? [];
   const [busyId, setBusyId] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [creating, setCreating] = useState(false);
 
   const handleDelete = async (id: number) => {
     if (!confirm(t("templates.confirmDelete"))) return;
@@ -72,22 +67,6 @@ export default function TemplatesPage() {
       setActionError(e instanceof Error ? e.message : t("templates.deleteFailed"));
     } finally {
       setBusyId(null);
-    }
-  };
-
-  // A new template starts empty; the coach lands on its page to add exercises.
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const name = newName.trim();
-    if (!name) return;
-    setCreating(true);
-    setActionError(null);
-    try {
-      const template = await createWorkoutTemplate({ name });
-      router.push(`/coach/templates/${template.id}`);
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : t("templates.createFailed"));
-      setCreating(false);
     }
   };
 
@@ -106,42 +85,10 @@ export default function TemplatesPage() {
           </h1>
           <p className="mt-1 text-sm text-zinc-500">{t("templates.subtitle")}</p>
         </div>
-        {!showCreate && (
-          <Button onClick={() => setShowCreate(true)}>{t("templates.new")}</Button>
-        )}
+        <Link href="/coach/templates/new">
+          <Button>{t("templates.new")}</Button>
+        </Link>
       </div>
-
-      {showCreate && (
-        <form
-          onSubmit={handleCreate}
-          className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3"
-        >
-          <input
-            type="text"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder={t("templates.namePlaceholder")}
-            aria-label={t("templates.nameLabel")}
-            autoFocus
-            className="min-w-[14rem] flex-1 rounded-md border border-zinc-300 px-3 py-1.5 text-sm"
-          />
-          <Button type="submit" size="sm" disabled={creating || !newName.trim()}>
-            {creating ? t("common.working") : t("templates.create")}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            disabled={creating}
-            onClick={() => {
-              setShowCreate(false);
-              setNewName("");
-            }}
-          >
-            {t("common.cancel")}
-          </Button>
-        </form>
-      )}
 
       <Suspense fallback={null}>
         <SavedNotice templates={templates} />
